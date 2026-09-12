@@ -15,7 +15,7 @@ import {
 
 import {
   FIREBASE_CONFIG, RECAPTCHA_SITE_KEY, USE_EMULATOR,
-  IMAGE_MAX_PX, IMAGE_QUALITY, IMAGE_MAX_BYTES,
+  IMAGE_MAX_PX, IMAGE_QUALITY, IMAGE_MAX_BYTES, LOGIN_DOMAIN,
 } from "./config.js";
 
 export const app = initializeApp(FIREBASE_CONFIG);
@@ -78,8 +78,8 @@ const STRINGS = {
     navOrders: "ออเดอร์", navMenu: "จัดการเมนู", navReport: "ยอดขาย", navTables: "โต๊ะ & QR",
     roleManager: "ผู้จัดการ", roleStaff: "พนักงานหน้าร้าน",
 
-    loginSub: "เข้าได้เฉพาะบัญชีพนักงานที่ทางร้านสร้างไว้",
-    email: "อีเมล", password: "รหัสผ่าน", signin: "เข้าสู่ระบบ",
+    loginSub: "เข้าได้เฉพาะบัญชีที่ทางร้านสร้างไว้",
+    email: "ชื่อผู้ใช้", password: "รหัสผ่าน", signin: "เข้าสู่ระบบ",
     noAccessTitle: "บัญชีนี้ยังไม่มีสิทธิ์เข้าระบบ",
     noAccessText: "แจ้งผู้จัดการร้านให้เพิ่มบัญชีนี้เข้าระบบก่อน",
 
@@ -110,7 +110,7 @@ const STRINGS = {
     roleManager: "မန်နေဂျာ", roleStaff: "ဆိုင်ဝန်ထမ်း",
 
     loginSub: "ဆိုင်မှ ဖွင့်ပေးထားသော အကောင့်ဖြင့်သာ ဝင်နိုင်သည်",
-    email: "အီးမေးလ်", password: "စကားဝှက်", signin: "ဝင်မည်",
+    email: "အသုံးပြုသူအမည်", password: "စကားဝှက်", signin: "ဝင်မည်",
     noAccessTitle: "ဤအကောင့်တွင် ဝင်ခွင့် မရှိသေးပါ",
     noAccessText: "မန်နေဂျာကို ပြောပြီး ဤအကောင့်ကို ထည့်ခိုင်းပါ",
 
@@ -257,6 +257,14 @@ export function shrinkImage(file) {
   });
 }
 
+/** พนักงานพิมพ์ "admin12" ระบบเติมเป็น "admin12@qrmenu.local" ให้ Firebase */
+export const toEmail = v => {
+  const s = String(v || "").trim().toLowerCase();
+  return s.includes("@") ? s : `${s}@${LOGIN_DOMAIN}`;
+};
+/** ตัดโดเมนออกตอนโชว์บนหน้าจอ พนักงานจะได้เห็นแค่ชื่อผู้ใช้ */
+export const userLabel = u => String(u?.email || "").replace(`@${LOGIN_DOMAIN}`, "");
+
 /* ---------------- สิทธิ์และประตูหน้า admin ---------------- */
 /** รอจน Firebase บอกสถานะล็อกอิน แล้วคืน user หรือ null */
 export function currentUser() {
@@ -289,7 +297,7 @@ function noAccessScreen(user) {
   const v = document.getElementById("view");
   if (v) v.innerHTML = `<div class="center-msg"><div class="box">
       <h1>${esc(t("noAccessTitle"))}</h1>
-      <p>${esc(user?.email || "")}<br>${esc(t("noAccessText"))}</p>
+      <p>${esc(userLabel(user))}<br>${esc(t("noAccessText"))}</p>
       <p style="margin-top:18px"><button class="btn ghost" id="so">${esc(t("signout"))}</button></p>
     </div></div>`;
   document.getElementById("so")?.addEventListener("click", async () => {
@@ -331,7 +339,7 @@ export function renderAdminChrome(active, user, role = "staff") {
           `<a href="${href}"${href === active ? ' aria-current="page"' : ""}>${esc(t(key))}</a>`).join("")}
       </nav>
       <div class="who">
-        <span class="mail">${esc(user?.email || "")} · ${esc(roleLabel(role))}</span>
+        <span class="mail">${esc(userLabel(user))} · ${esc(roleLabel(role))}</span>
         <span class="langsw" role="group" aria-label="ภาษา / ဘာသာစကား">
           ${LANGS.map(l => `<button data-lang="${l.id}" aria-pressed="${l.id === getLang()}">${esc(l.label)}</button>`).join("")}
         </span>

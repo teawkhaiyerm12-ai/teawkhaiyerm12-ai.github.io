@@ -35,3 +35,8 @@ export const USE_EMULATOR = false;
 export const IMAGE_MAX_PX = 240;
 export const IMAGE_QUALITY = 0.55;
 export const IMAGE_MAX_BYTES = 40 * 1024;
+
+// พนักงานพิมพ์แค่ชื่อผู้ใช้ (เช่น admin12) ระบบเติมโดเมนนี้ให้เอง
+// Firebase Auth รับเฉพาะ email format แต่ไม่ได้ส่งเมลยืนยัน โดเมนปลอมจึงใช้ได้
+// ผลข้างเคียง: กด "ลืมรหัสผ่าน" ทางอีเมลไม่ได้ ต้องรีเซ็ตที่ Firebase Console
+export const LOGIN_DOMAIN = "qrmenu.local";

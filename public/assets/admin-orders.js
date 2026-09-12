@@ -3,7 +3,7 @@ import {
   auth, db, collection, doc, query, where, orderBy, onSnapshot, updateDoc, deleteDoc,
   signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence,
   currentUser, loadRole, renderAdminChrome, loadSettings, applyCachedSettings,
-  t, setLang, getLang, LANGS,
+  t, setLang, getLang, LANGS, toEmail, userLabel,
   baht, esc, hhmm, dayKey, dayRange, toast, friendlyError,
 } from "./core.js";
 import { writeStats } from "./stats.js";
@@ -22,7 +22,7 @@ function noAccess(u) {
   document.getElementById("chrome").innerHTML = "";
   view.innerHTML = `<div class="center-msg"><div class="box">
       <h1>${esc(t("noAccessTitle"))}</h1>
-      <p>${esc(u.email || "")}<br>${esc(t("noAccessText"))}</p>
+      <p>${esc(userLabel(u))}<br>${esc(t("noAccessText"))}</p>
       <p style="margin-top:18px"><button class="btn ghost" id="so">${esc(t("signout"))}</button></p>
     </div></div>`;
   document.getElementById("so").onclick = async () => { await signOut(auth); location.reload(); };
@@ -39,7 +39,8 @@ function login() {
         ${LANGS.map(l => `<button type="button" data-lang="${l.id}" aria-pressed="${l.id === getLang()}">${esc(l.label)}</button>`).join("")}
       </div>
       <label for="em">${esc(t("email"))}</label>
-      <input class="fld" id="em" type="email" autocomplete="username" required>
+      <input class="fld" id="em" type="text" inputmode="email" autocapitalize="none"
+             autocomplete="username" spellcheck="false" required>
       <label for="pw">${esc(t("password"))}</label>
       <input class="fld" id="pw" type="password" autocomplete="current-password" required>
       <button class="btn" type="submit">${esc(t("signin"))}</button>
@@ -60,7 +61,7 @@ function login() {
     btn.disabled = true; er.textContent = "";
     try {
       await setPersistence(auth, browserLocalPersistence);
-      const cred = await signInWithEmailAndPassword(auth, em.value.trim(), pw.value);
+      const cred = await signInWithEmailAndPassword(auth, toEmail(em.value), pw.value);
       const next = new URLSearchParams(location.search).get("next");
       if (next && next.startsWith("/admin")) return location.replace(next);
       const role = await loadRole(cred.user);
