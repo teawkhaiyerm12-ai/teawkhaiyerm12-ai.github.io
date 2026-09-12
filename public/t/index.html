@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#C2410C">
+<meta name="robots" content="noindex">
+<title>เมนู</title>
+<script>
+// ทาชื่อร้านกับธีมสีที่ cache ไว้ก่อนหน้าจะวาด ไม่งั้นเห็นสีเก่าแวบหนึ่ง
+try { var s = JSON.parse(localStorage.getItem("qr-order-settings") || "null");
+      if (s && s.palette) document.documentElement.setAttribute("data-palette", s.palette); } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div id="app">
+    <div class="center-msg"><div class="box"><p class="loading">กำลังโหลดเมนู…</p></div></div>
+  </div>
+  <script type="module" src="/assets/customer.js"></script>
+</body>
+</html>

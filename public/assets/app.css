@@ -1,0 +1,384 @@
+/* ============================================================
+   ธีมสี — เงาใช้ชุดเดียวทุกธีม แยกไว้ต่างหากจะได้ไม่เขียนซ้ำ
+   ธีมเริ่มต้น (ส้มอบอุ่น) อยู่บน :root เปล่า ๆ จะได้ไม่ต้องติด attribute
+   ============================================================ */
+:root{ --shadow:0 1px 2px rgba(30,20,12,.05),0 10px 30px -18px rgba(30,20,12,.35) }
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -18px rgba(0,0,0,.9) }}
+:root[data-theme="dark"]{ --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -18px rgba(0,0,0,.9) }
+
+:root{
+  --ground:#FAF6F1; --surface:#FFFFFF; --surface-2:#F2EBE2; --line:#E4D9CB;
+  --ink:#211610; --ink-2:#4A3B30; --muted:#7C6A5C;
+  --accent:#C2410C; --accent-ink:#9A3412; --accent-wash:#FBE8D9; --on-accent:#FFFFFF;
+  --chili:#A4161A; --chili-wash:#FAE3E3; --amber:#A16207; --amber-wash:#F7EEDC;
+  --tile:#EFE7DC;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#141009; --surface:#1E1811; --surface-2:#2A2118; --line:#3A2E22;
+  --ink:#F2E9DE; --ink-2:#C6B7A6; --muted:#8E7D6C;
+  --accent:#FB923C; --accent-ink:#FDBA74; --accent-wash:#331E0E; --on-accent:#1C1006;
+  --chili:#F87171; --chili-wash:#331616; --amber:#E0B341; --amber-wash:#2A2213;
+  --tile:#2E2419;
+}}
+:root[data-theme="dark"]{
+  --ground:#141009; --surface:#1E1811; --surface-2:#2A2118; --line:#3A2E22;
+  --ink:#F2E9DE; --ink-2:#C6B7A6; --muted:#8E7D6C;
+  --accent:#FB923C; --accent-ink:#FDBA74; --accent-wash:#331E0E; --on-accent:#1C1006;
+  --chili:#F87171; --chili-wash:#331616; --amber:#E0B341; --amber-wash:#2A2213;
+  --tile:#2E2419;
+}
+
+:root[data-palette="red"]{
+  --ground:#FAF6F5; --surface:#FFFFFF; --surface-2:#F3E9E8; --line:#E6D5D3;
+  --ink:#1F1315; --ink-2:#48373A; --muted:#7B6467;
+  --accent:#B4232E; --accent-ink:#8E1A24; --accent-wash:#FAE3E4; --on-accent:#FFFFFF;
+  --chili:#9A3412; --chili-wash:#FBE8DC; --amber:#A16207; --amber-wash:#F7EEDC;
+  --tile:#EFE4E3;
+}
+@media (prefers-color-scheme: dark){:root[data-palette="red"]:not([data-theme="light"]){
+  --ground:#150F10; --surface:#1F1618; --surface-2:#2B1F21; --line:#3C2B2E;
+  --ink:#F1E6E7; --ink-2:#C7B3B5; --muted:#8D767A;
+  --accent:#F26B72; --accent-ink:#FB9AA0; --accent-wash:#331519; --on-accent:#1B0A0C;
+  --chili:#FB923C; --chili-wash:#2E1B0D; --amber:#E0B341; --amber-wash:#2A2213;
+  --tile:#302225;
+}}
+:root[data-theme="dark"][data-palette="red"]{
+  --ground:#150F10; --surface:#1F1618; --surface-2:#2B1F21; --line:#3C2B2E;
+  --ink:#F1E6E7; --ink-2:#C7B3B5; --muted:#8D767A;
+  --accent:#F26B72; --accent-ink:#FB9AA0; --accent-wash:#331519; --on-accent:#1B0A0C;
+  --chili:#FB923C; --chili-wash:#2E1B0D; --amber:#E0B341; --amber-wash:#2A2213;
+  --tile:#302225;
+}
+
+:root[data-palette="green"]{
+  --ground:#F4F7F3; --surface:#FFFFFF; --surface-2:#EBF0EA; --line:#D5DED2;
+  --ink:#101E19; --ink-2:#3D4F47; --muted:#6C7F76;
+  --accent:#0E6B4C; --accent-ink:#0A5239; --accent-wash:#E2EFE8; --on-accent:#FFFFFF;
+  --chili:#B23A22; --chili-wash:#F7E7E2; --amber:#B07A12; --amber-wash:#F6EEDC;
+  --tile:#E8EDE6;
+}
+@media (prefers-color-scheme: dark){:root[data-palette="green"]:not([data-theme="light"]){
+  --ground:#0C1411; --surface:#141F1A; --surface-2:#1B2823; --line:#2A3A33;
+  --ink:#E3EBE6; --ink-2:#B4C4BC; --muted:#7F958B;
+  --accent:#3FBE8A; --accent-ink:#7EDDB3; --accent-wash:#152D24; --on-accent:#06231A;
+  --chili:#E8785D; --chili-wash:#2C1913; --amber:#D9A93F; --amber-wash:#2A2213;
+  --tile:#22302A;
+}}
+:root[data-theme="dark"][data-palette="green"]{
+  --ground:#0C1411; --surface:#141F1A; --surface-2:#1B2823; --line:#2A3A33;
+  --ink:#E3EBE6; --ink-2:#B4C4BC; --muted:#7F958B;
+  --accent:#3FBE8A; --accent-ink:#7EDDB3; --accent-wash:#152D24; --on-accent:#06231A;
+  --chili:#E8785D; --chili-wash:#2C1913; --amber:#D9A93F; --amber-wash:#2A2213;
+  --tile:#22302A;
+}
+
+/* ============================================================ base */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);
+  font-family:"IBM Plex Sans Thai","Leelawadee UI","Noto Sans Thai",Tahoma,system-ui,-apple-system,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;
+  min-height:100dvh}
+h1,h2,h3,h4{font-family:"Bai Jamjuree","IBM Plex Sans Thai","Leelawadee UI","Noto Sans Thai",Tahoma,system-ui,sans-serif;line-height:1.3;margin:0;text-wrap:balance}
+a{color:var(--accent-ink)}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,"Leelawadee UI","Noto Sans Thai",Tahoma,monospace;font-variant-numeric:tabular-nums}
+.hide{display:none !important}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+
+.btn{background:var(--accent);color:var(--on-accent);border-radius:5px;padding:7px 15px;
+  font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:default;filter:none}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500}
+.btn.ghost:hover{color:var(--ink);border-color:var(--muted);filter:none}
+.btn.danger:hover{color:var(--chili);border-color:var(--chili)}
+.fld{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:5px;
+  padding:8px 11px;font-size:15px;color:var(--ink)}
+.fld:hover{border-color:var(--muted)}
+
+.toast-bar{position:fixed;left:50%;bottom:26px;transform:translate(-50%,140%);
+  background:var(--ink);color:var(--ground);padding:11px 20px;border-radius:100px;
+  font-size:14.5px;font-weight:500;z-index:90;box-shadow:var(--shadow);max-width:90vw;
+  transition:transform .3s cubic-bezier(.2,.8,.3,1)}
+.toast-bar.show{transform:translate(-50%,0)}
+.toast-bar[data-kind="err"]{background:var(--chili);color:#fff}
+
+.empty{border:1px dashed var(--line);border-radius:6px;padding:46px 20px;
+  text-align:center;color:var(--muted);font-size:14.5px}
+.loading{color:var(--muted);font-size:14px;padding:26px 0;text-align:center}
+
+/* ============================================================ admin chrome */
+#chrome .bar{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;
+  padding:11px 22px;background:var(--surface);border-bottom:1px solid var(--line)}
+#chrome .brand{font-family:"Bai Jamjuree",sans-serif;font-weight:700;font-size:17px;flex:none}
+#chrome .brand i{font-style:normal;font-weight:500;font-size:12.5px;color:var(--muted);margin-left:6px}
+#chrome .tabs{display:flex;gap:3px;flex:1;overflow-x:auto;scrollbar-width:none}
+#chrome .tabs::-webkit-scrollbar{display:none}
+#chrome .tabs a{padding:6px 14px;border-radius:100px;text-decoration:none;color:var(--muted);
+  font-size:14px;font-weight:500;white-space:nowrap}
+#chrome .tabs a:hover{color:var(--ink);background:var(--surface-2)}
+#chrome .tabs a[aria-current="page"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+#chrome .who{display:flex;align-items:center;gap:10px;flex:none}
+#chrome .mail{font-size:12.5px;color:var(--muted);max-width:26ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* สลับภาษาหน้าหลังร้าน — พนักงานหน้าร้านหลายคนเป็นคนพม่า
+   หน้าลูกค้าไม่มีตัวเลือกนี้ ใช้ภาษาไทยอย่างเดียว */
+.langsw{display:inline-flex;border:1px solid var(--line);border-radius:100px;
+  overflow:hidden;background:var(--surface);flex:none}
+.langsw button{padding:5px 12px;font-size:12.5px;color:var(--muted);min-height:32px;
+  line-height:1.5;white-space:nowrap}
+.langsw button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.langsw.login{margin:12px 0 4px}
+/* Myanmar has no glyphs in Bai Jamjuree / IBM Plex Mono — force a covering font */
+html[lang="my"] h1,html[lang="my"] h2,html[lang="my"] h3,html[lang="my"] h4,
+html[lang="my"] .brand,html[lang="my"] .mono,html[lang="my"] .kpi .k,
+html[lang="my"] .kpi .v,html[lang="my"] .ticket .tt{
+  font-family:"Myanmar Text","Noto Sans Myanmar",Padauk,system-ui,sans-serif}
+html[lang="my"] body{font-family:"Myanmar Text","Noto Sans Myanmar",Padauk,"IBM Plex Sans Thai","Leelawadee UI","Noto Sans Thai",Tahoma,system-ui,sans-serif;
+  line-height:1.9}
+html[lang="my"] .ticket li,html[lang="my"] .btn,html[lang="my"] #chrome .tabs a,
+html[lang="my"] .filters button{line-height:1.85}
+
+.page{max-width:1180px;margin:0 auto;padding:26px 22px 80px}
+.phead{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+.phead h1{font-size:24px;font-weight:600;letter-spacing:-.01em}
+.phead .hint{color:var(--muted);font-size:13.5px;margin:2px 0 0;max-width:72ch}
+.phead .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+h2.sec{font-size:16px;font-weight:600;margin:30px 0 10px}
+
+/* ============================================================ login */
+.loginwrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
+.loginbox{width:100%;max-width:370px;background:var(--surface);border:1px solid var(--line);
+  border-radius:8px;padding:28px 26px;box-shadow:var(--shadow)}
+.loginbox h1{font-size:22px;font-weight:700;margin-bottom:3px}
+.loginbox p.sub{color:var(--muted);font-size:13.5px;margin:0 0 20px}
+.loginbox label{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
+.loginbox .btn{width:100%;margin-top:18px;min-height:44px}
+.loginbox .err{color:var(--chili);font-size:13.5px;margin-top:12px;min-height:20px}
+
+/* ============================================================ orders */
+.ordergrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:13px}
+.ticket{border:1px solid var(--line);border-radius:6px;background:var(--surface);overflow:hidden;
+  border-left:3px solid var(--amber);box-shadow:var(--shadow)}
+.ticket.done{border-left-color:var(--line);opacity:.55}
+.ticket.cancelled{border-left-color:var(--chili);opacity:.55}
+.ticket.cancelled .sum{text-decoration:line-through}
+.ticket .th{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  padding:9px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.ticket .tno{font-family:"Bai Jamjuree",sans-serif;font-weight:700;font-size:16px}
+.ticket .tt{font-size:11.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.ticket .ed{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+  color:var(--amber);border:1px solid var(--amber);border-radius:2px;padding:0 4px;margin-left:6px;font-weight:500}
+.ticket ul{list-style:none;margin:0;padding:10px 14px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ticket li{display:flex;justify-content:space-between;gap:10px;align-items:center;min-height:26px}
+.ticket li b{font-weight:600;color:var(--accent-ink);flex:none}
+.ticket .ln{min-width:0;overflow-wrap:anywhere}
+.ticket .qed{display:flex;align-items:center;gap:3px;flex:none}
+.ticket .qed button{width:24px;height:24px;border:1px solid var(--line);border-radius:5px;
+  background:var(--surface);display:grid;place-items:center;font-size:14px;line-height:1;color:var(--accent-ink)}
+.ticket .qed button:hover{border-color:var(--accent)}
+.ticket .qed .q{min-width:20px;text-align:center;font-weight:600;font-size:13.5px;font-variant-numeric:tabular-nums}
+.ticket .rmline{margin-left:3px;color:var(--muted);font-size:11px}
+.ticket .rmline:hover{color:var(--chili);border-color:var(--chili)}
+.ticket .tf{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ticket .sum{font-weight:600}
+.ticket .acts{display:flex;gap:6px}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters button{border:1px solid var(--line);border-radius:100px;padding:4px 13px;
+  font-size:13.5px;color:var(--muted);background:var(--surface)}
+.filters button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);
+  border-color:var(--accent);font-weight:600}
+
+/* ============================================================ menu editor */
+.mrow{display:grid;grid-template-columns:64px minmax(0,1fr) 96px 96px 86px 36px;gap:10px;align-items:start;
+  padding:10px 0;border-bottom:1px solid var(--line)}
+@media(max-width:820px){.mrow{grid-template-columns:64px minmax(0,1fr) 96px;grid-auto-rows:auto}}
+.tile{width:64px;height:64px;border-radius:6px;background:var(--tile);display:grid;place-items:center;
+  font-size:27px;overflow:hidden;position:relative;border:1px dashed var(--muted);cursor:pointer}
+.tile.has{border-style:solid;border-color:var(--line)}
+.tile img{width:100%;height:100%;object-fit:cover}
+.tile input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.tile .cam{position:absolute;left:0;right:0;bottom:0;background:rgba(8,10,9,.72);color:#fff;
+  font-size:9.5px;line-height:1.5;text-align:center;padding:1px 0;pointer-events:none}
+.tile.drop{border-color:var(--accent);background:var(--accent-wash)}
+.tile .rm{position:absolute;top:2px;right:2px;width:19px;height:19px;border-radius:50%;
+  background:rgba(8,10,9,.72);color:#fff;font-size:11px;line-height:19px;text-align:center;z-index:2}
+.tile .rm:hover{background:var(--chili)}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.names{display:flex;flex-direction:column;gap:5px;min-width:0}
+.names .uid{font-size:10.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace;
+  letter-spacing:.03em;user-select:all;overflow-wrap:anywhere}
+.names .uid code{background:var(--surface-2);border:1px solid var(--line);
+  border-radius:3px;padding:0 4px}
+.sw input{accent-color:var(--accent);width:16px;height:16px}
+.del{color:var(--muted);font-size:17px;line-height:1;padding:4px 8px;border-radius:5px}
+.del:hover{color:var(--chili);background:var(--chili-wash)}
+.addbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;box-shadow:var(--shadow)}
+.shoprow{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.shoprow label{font-size:13.5px;font-weight:600;flex:none}
+.shoprow .fld{flex:1 1 220px;max-width:340px}
+.palrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex-basis:100%}
+.pal{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:100px;
+  background:var(--surface);padding:4px 13px 4px 6px;font-size:13.5px;color:var(--ink-2)}
+.pal::before{content:"";width:17px;height:17px;border-radius:50%;background:var(--p);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.pal:hover{border-color:var(--muted);color:var(--ink)}
+.pal[aria-pressed="true"]{border-color:var(--accent);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--accent)}
+
+/* ============================================================ report */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-bottom:24px}
+.kpi{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:var(--surface);box-shadow:var(--shadow)}
+.kpi .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.kpi .v{font-family:"Bai Jamjuree",sans-serif;font-size:27px;font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12.5px;color:var(--muted)}
+.delta{font-size:12.5px;font-weight:600;border-radius:100px;padding:1px 9px;white-space:nowrap}
+.delta.up{background:var(--accent-wash);color:var(--accent-ink)}
+.delta.down{background:var(--chili-wash);color:var(--chili)}
+.delta.flat{background:var(--surface-2);color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:minmax(120px,1.6fr) minmax(0,4fr) 96px;gap:12px;align-items:center;font-size:14px}
+@media(max-width:640px){.bar{grid-template-columns:minmax(90px,1fr) minmax(0,2fr) 74px;font-size:13px}}
+.bar .track{background:var(--surface-2);border-radius:3px;height:22px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent);border-radius:3px}
+.bar .amt{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.bar .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chart{border:1px solid var(--line);border-radius:6px;padding:16px 16px 10px;background:var(--surface);
+  margin-bottom:22px;box-shadow:var(--shadow)}
+.chart .cap{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px}
+.chart .cap h4{font-size:14px;font-weight:600}
+.chart .cap span{font-size:12px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.cols{display:flex;align-items:flex-end;gap:2px;height:168px;border-bottom:1px solid var(--line);padding-bottom:1px}
+.col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
+.col i{display:block;background:var(--accent);border-radius:2px 2px 0 0;min-height:2px}
+.col.we i{background:var(--accent-ink);opacity:.75}
+.col.today i{background:var(--amber)}
+.col:hover i{filter:brightness(1.25)}
+.col .tip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;
+  background:var(--ink);color:var(--ground);font-size:11.5px;line-height:1.5;padding:3px 8px;border-radius:4px;
+  white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:4;font-variant-numeric:tabular-nums}
+.col:hover .tip{opacity:1}
+.xax{display:flex;gap:2px;margin-top:5px;font-size:10px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.xax span{flex:1;min-width:0;text-align:center;overflow:hidden}
+.lgd{display:flex;gap:16px;margin-top:10px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.lgd b{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+
+/* ============================================================ tables + qr */
+.qrgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
+.qrcard{border:1px solid #E4D9CB;border-radius:6px;background:#fff;padding:16px 10px;text-align:center}
+.qrcard .qi{display:grid;place-items:center;min-height:144px}
+.qrcard canvas,.qrcard img{display:block}
+.qrcard .lbl{font-family:"Bai Jamjuree",sans-serif;font-weight:700;color:#211610;font-size:16px;margin-top:8px}
+.qrcard .sc{font-size:11.5px;color:#7C6A5C}
+.qrcard .tk{font-family:"IBM Plex Mono",monospace;font-size:9px;color:#A99B8C;word-break:break-all;margin-top:4px}
+.qrcard .off{font-size:11.5px;color:#A4161A}
+@media print{
+  #chrome,.phead,.noprint{display:none !important}
+  body{background:#fff}
+  .page{padding:0;max-width:none}
+  .qrgrid{grid-template-columns:repeat(3,1fr);gap:18px}
+  .qrcard{break-inside:avoid;border-color:#bbb}
+}
+
+/* ============================================================ customer
+   ยืดหยุ่นตามจอ: มือถือแนวตั้ง -> คอลัมน์เดียว
+                  มือถือแนวนอน / tablet -> 2 คอลัมน์ จำกัดความกว้าง
+                  tablet แนวนอนขึ้นไป -> 3 คอลัมน์
+   ใช้ dvh กับ safe-area ทุกด้าน รองรับ notch ของ iPhone ทั้งแนวตั้งและแนวนอน   */
+.cust{min-height:100svh;min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)}
+.cust,.cartbar{--gut:max(16px, env(safe-area-inset-left));--gut-r:max(16px, env(safe-area-inset-right))}
+.cust *{-webkit-tap-highlight-color:transparent}
+
+.cust-head{position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--line)}
+.cust-top{padding:14px var(--gut-r) 10px var(--gut)}
+.cust-top .shop{font-family:"Bai Jamjuree",sans-serif;font-weight:700;font-size:clamp(19px,4.6vw,26px);letter-spacing:-.01em}
+.cust-top .tb{display:flex;align-items:center;gap:8px;margin-top:2px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.tbadge{background:var(--accent-wash);color:var(--accent-ink);border-radius:100px;
+  padding:1px 11px;font-weight:600;font-size:12.5px}
+.chips{display:flex;gap:7px;padding:0 var(--gut-r) 11px var(--gut);overflow-x:auto;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);border-radius:100px;padding:8px 16px;
+  font-size:13.5px;color:var(--ink-2);background:var(--surface);min-height:38px}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
+
+.list{flex:1;padding:6px var(--gut-r) calc(150px + env(safe-area-inset-bottom)) var(--gut);
+  width:100%;margin:0 auto}
+.sechead{font-family:"Bai Jamjuree",sans-serif;font-weight:600;font-size:14px;color:var(--muted);
+  padding:18px 0 6px;grid-column:1/-1}
+.item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);align-items:center}
+.item .ph{width:64px;height:64px;flex:none;border-radius:8px;background:var(--tile);
+  display:grid;place-items:center;font-size:29px;overflow:hidden}
+.item.pic .ph{width:82px;height:82px}
+.item .ph img{width:100%;height:100%;object-fit:cover}
+.item .info{flex:1;min-width:0}
+.item .nm{font-weight:600;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
+.item .pr{color:var(--accent-ink);font-weight:600;font-size:14.5px;font-variant-numeric:tabular-nums}
+.item .so{font-size:12px;color:var(--chili)}
+.item.off{opacity:.45}
+.stepper{flex:none;display:flex;align-items:center;gap:4px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);
+  display:grid;place-items:center;font-size:19px;line-height:1;color:var(--accent-ink);background:var(--surface)}
+.stepper .q{min-width:24px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+.add{width:40px;height:40px;border-radius:10px;background:var(--accent);color:var(--on-accent);
+  display:grid;place-items:center;font-size:20px;line-height:1;flex:none}
+
+.cartbar{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--surface);
+  border-top:1px solid var(--line);
+  padding:12px var(--gut-r) calc(12px + env(safe-area-inset-bottom)) var(--gut);
+  transform:translateY(140%);transition:transform .28s cubic-bezier(.2,.8,.3,1)}
+.cartbar.show{transform:none}
+.cartbar .inner{width:100%;margin:0 auto}
+.cartbar .sumline{display:flex;justify-content:space-between;font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.cartbar .sumline b{color:var(--ink);font-size:18px;font-family:"Bai Jamjuree",sans-serif;font-variant-numeric:tabular-nums}
+.submit{width:100%;min-height:52px;border-radius:12px;background:var(--accent);color:var(--on-accent);
+  font-family:"Bai Jamjuree",sans-serif;font-weight:700;font-size:17px}
+.submit:disabled{opacity:.6}
+
+/* ---- มือถือแนวนอน + tablet แนวตั้ง: 2 คอลัมน์ ---- */
+@media (min-width:600px){
+  .list{max-width:860px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:26px;align-content:start}
+  .cust-head>*{max-width:860px;margin-inline:auto;width:100%}
+  .cartbar .inner{max-width:860px}
+  .item{padding:13px 0}
+  .item.pic .ph{width:92px;height:92px}
+  .item .nm{font-size:16px}
+}
+/* ---- tablet แนวนอนขึ้นไป: 3 คอลัมน์ ---- */
+@media (min-width:1024px){
+  .list{max-width:1180px;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:30px}
+  .cust-head>*{max-width:1180px}
+  .cartbar .inner{max-width:1180px;display:flex;align-items:center;gap:22px}
+  .cartbar .sumline{margin:0;flex:1;gap:18px}
+  .submit{width:auto;min-width:280px;padding:0 30px}
+}
+/* ---- จอสูงน้อย (มือถือแนวนอน) อย่าให้ header กินที่ ----
+   ซ่อนได้แค่ข้อความชวน — ป้ายเลขโต๊ะต้องอยู่เสมอ ลูกค้าใช้ยืนยันว่าสแกนถูกโต๊ะ */
+@media (max-height:520px){
+  .cust-top{padding-top:6px;padding-bottom:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .cust-top .shop{font-size:17px}
+  .cust-top .tb{margin-top:0}
+  .cust-top .tb span:not(.tbadge){display:none}
+  .chips{padding-bottom:8px}
+  .chip{padding:6px 14px;min-height:34px}
+  .list{padding-bottom:calc(116px + env(safe-area-inset-bottom))}
+  .cartbar{padding-top:8px}
+  .submit{min-height:46px;font-size:16px}
+}
+
+.sheet{position:fixed;inset:0;background:rgba(8,10,9,.55);display:grid;place-items:center;padding:24px;z-index:20}
+.sheet .box{background:var(--surface);border-radius:16px;padding:30px 26px;text-align:center;max-width:320px;width:100%}
+.sheet .ic{width:56px;height:56px;border-radius:50%;background:var(--accent-wash);color:var(--accent-ink);
+  display:grid;place-items:center;font-size:28px;margin:0 auto 14px}
+.sheet h2{font-size:20px;font-weight:700;margin-bottom:5px}
+.sheet p{margin:0 0 18px;font-size:13.5px;color:var(--muted)}
+.center-msg{min-height:100svh;min-height:100dvh;display:grid;place-items:center;padding:30px;text-align:center}
+.center-msg .box{max-width:330px}
+.center-msg h1{font-size:21px;font-weight:700;margin-bottom:8px}
+.center-msg p{color:var(--muted);font-size:14.5px;margin:0}

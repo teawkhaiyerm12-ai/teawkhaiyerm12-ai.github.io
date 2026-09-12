@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>วัดพื้นที่และโควตา — โต๊ะ QR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../public/assets/app.css">
+<style>
+  .drop{border:2px dashed var(--muted);border-radius:8px;padding:26px;text-align:center;
+    background:var(--surface);color:var(--muted);cursor:pointer}
+  .drop.over{border-color:var(--accent);background:var(--accent-wash);color:var(--ink)}
+  .thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .thumb{width:110px;text-align:center;font-size:11.5px;color:var(--muted)}
+  .thumb img{width:110px;height:88px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block}
+  table.data{border-collapse:collapse;width:100%;font-size:14px;margin-bottom:20px}
+  table.data th,table.data td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+  table.data th{background:var(--surface-2);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+  table.data td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .ok{color:var(--accent-ink);font-weight:600}
+  .bad{color:var(--chili);font-weight:600}
+  .scroll{overflow-x:auto}
+  pre.out{background:var(--code-bg,#0F1A16);color:var(--code-ink,#D9E5DE);padding:14px 16px;border-radius:6px;
+    font-size:12.5px;overflow-x:auto;font-family:"IBM Plex Mono",monospace}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="phead">
+    <div>
+      <h1>วัดพื้นที่และโควตาจริง</h1>
+      <p class="hint">ใช้ฟังก์ชัน <code>shrinkImage()</code> ตัวเดียวกับที่ระบบใช้จริง แล้วคำนวณขนาด document
+        ตามสูตรของ Firestore — ไม่ใช่การประมาณ</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="drop" id="drop">
+      <b>ลากรูปเมนูมาวางตรงนี้</b> หรือกดเพื่อเลือกไฟล์ — ระบบจะ clone ให้ครบ 20 เมนูเอง
+      <input type="file" id="file" accept="image/*" multiple hidden>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:14px">
+      <label class="sw">จำนวนเมนู <input class="fld num" id="nmenu" type="number" value="20" min="1" max="200" style="width:80px"></label>
+      <label class="sw">รายการต่อบิล <input class="fld num" id="nline" type="number" value="3" min="1" max="30" style="width:80px"></label>
+      <label class="sw">เก็บกี่ปี <input class="fld num" id="nyear" type="number" value="2" min="1" max="10" style="width:80px"></label>
+      <label class="sw">เปิดเมนู/บิล <input class="fld num" id="nview" type="number" value="1.2" min="1" max="5" step="0.1" style="width:80px"></label>
+      <button class="btn" id="run">คำนวณ</button>
+    </div>
+  </div>
+
+  <div id="out"><p class="loading">ใส่รูปแล้วกดคำนวณ</p></div>
+</div>
+
+<script type="module">
+import { shrinkImage } from "../public/assets/core.js";
+import { IMAGE_MAX_PX, IMAGE_QUALITY, IMAGE_MAX_BYTES } from "../public/assets/config.js";
+
+/* ---------- สูตรขนาด document ของ Firestore ----------
+   https://firebase.google.com/docs/firestore/storage-size
+   string  = จำนวน byte แบบ UTF-8 + 1
+   number / timestamp = 8
+   boolean = 1 · null = 1
+   array   = ผลรวมของสมาชิก
+   map     = เหมือน document (ชื่อ field + ค่า)
+   ชื่อ document = ผลรวม (ชื่อ collection + 1) + (doc id + 1) + 16
+   ขนาดรวม = ชื่อ document + ผลรวม(ชื่อ field + ค่า) + 32                        */
+const utf8 = s => new TextEncoder().encode(String(s)).length;
+const strSize = s => utf8(s) + 1;
+
+function valueSize(v) {
+  if (v === null || v === undefined) return 1;
+  if (typeof v === "string") return strSize(v);
+  if (typeof v === "number") return 8;
+  if (typeof v === "boolean") return 1;
+  if (v instanceof Date) return 8;
+  if (Array.isArray(v)) return v.reduce((a, x) => a + valueSize(x), 0);
+  return Object.entries(v).reduce((a, [k, x]) => a + strSize(k) + valueSize(x), 0);
+}
+function docNameSize(segments) {
+  return segments.reduce((a, s) => a + utf8(s) + 1, 0) + 16;
+}
+function docSize(segments, data) {
+  return docNameSize(segments) + valueSize(data) + 32;
+}
+
+/* index entry ของ field ที่ไม่ได้ยกเว้น — ประมาณตามสูตรของ Google
+   entry = ชื่อ document + ชื่อ collection + ชื่อ field + ค่า + 32
+   default มี 2 ทิศ (asc + desc) จึงคูณ 2                                        */
+function indexSize(collection, docId, field, value) {
+  return 2 * (docNameSize([collection, docId]) + strSize(collection) + strSize(field) + valueSize(value) + 32);
+}
+
+const MB = 1024 * 1024, GB = 1024 * MB, GiB = GB;
+const fmt = b => b >= GB ? (b / GB).toFixed(2) + " GB"
+              : b >= MB ? (b / MB).toFixed(1) + " MB"
+              : b >= 1024 ? (b / 1024).toFixed(1) + " KB" : b + " B";
+const pct = (a, b) => (a / b * 100);
+
+const NAMES = ["เย็นตาโฟทะเล","ข้าวไข่ดาว","ข้าวกะเพราหมูสับ","ต้มยำกุ้งน้ำข้น","ผัดไทยกุ้งสด",
+  "ข้าวผัดกุ้ง","ข้าวหมูกรอบ","ข้าวมันไก่","ก๋วยเตี๋ยวต้มยำหมู","ราดหน้าหมูหมัก",
+  "ปีกไก่ทอดน้ำปลา","ไข่เจียวหมูสับ","หมูสะเต๊ะ","ส้มตำไทย","ลาบหมู",
+  "ชาเย็น","น้ำมะนาวโซดา","น้ำเปล่า","โค้ก","ข้าวเปล่า"];
+const CATS = ["แนะนำ","ข้าว","เส้น","ทานเล่น","เครื่องดื่ม"];
+
+let shrunk = [];   // [{name, srcBytes, w, h, dataUri}]
+
+/* ---------- รับไฟล์ ---------- */
+const drop = document.getElementById("drop"), fileInput = document.getElementById("file");
+drop.onclick = () => fileInput.click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); take(e.dataTransfer.files); };
+fileInput.onchange = () => take(fileInput.files);
+
+async function take(files) {
+  for (const f of files) {
+    if (!/^image\//.test(f.type)) continue;
+    const dim = await new Promise(res => {
+      const i = new Image(); i.onload = () => res([i.width, i.height]); i.src = URL.createObjectURL(f);
+    });
+    try {
+      const dataUri = await shrinkImage(f);
+      shrunk.push({ name: f.name, srcBytes: f.size, w: dim[0], h: dim[1], dataUri });
+    } catch (e) { alert(f.name + ": " + e.message); }
+  }
+  paintThumbs();
+  if (shrunk.length) run();
+}
+
+function paintThumbs() {
+  document.getElementById("thumbs").innerHTML = shrunk.map(s => `
+    <div class="thumb"><img src="${s.dataUri}" alt="">
+      ${s.w}×${s.h} →
+      <b>${(s.dataUri.length / 1024).toFixed(1)} KB</b><br>
+      ต้นฉบับ ${(s.srcBytes / 1024).toFixed(0)} KB
+    </div>`).join("");
+}
+
+document.getElementById("run").onclick = run;
+
+function run() {
+  if (!shrunk.length) return alert("ใส่รูปก่อนอย่างน้อย 1 รูป");
+  const nMenu = +document.getElementById("nmenu").value;
+  const nLine = +document.getElementById("nline").value;
+  const years = +document.getElementById("nyear").value;
+  const viewsPerOrder = +document.getElementById("nview").value;
+  const days = Math.round(365.25 * years);
+
+  /* ---------- clone เมนูให้ครบ ---------- */
+  const menu = [];
+  for (let i = 0; i < nMenu; i++) {
+    const img = shrunk[i % shrunk.length];
+    menu.push({
+      id: "m" + String(i).padStart(18, "0"),          // auto-id ของ Firestore ยาว 20 ตัว
+      data: {
+        name: NAMES[i % NAMES.length] + (i >= NAMES.length ? " " + (i + 1) : ""),
+        price: 45 + (i % 12) * 5,
+        cat: CATS[i % CATS.length],
+        sort: i * 10,
+        emoji: "🍜",
+        img: img.dataUri,
+        soldout: false,
+      },
+    });
+  }
+
+  const menuDocBytes = menu.reduce((a, m) => a + docSize(["menu", m.id], m.data), 0);
+  const menuImgBytes = menu.reduce((a, m) => a + m.data.img.length, 0);
+  // index: ทุก field ยกเว้น img (ยกเว้นไว้ใน firestore.indexes.json)
+  const menuIdxBytes = menu.reduce((a, m) => a + Object.entries(m.data)
+    .filter(([k]) => k !== "img")
+    .reduce((s, [k, v]) => s + indexSize("menu", m.id, k, v), 0), 0);
+
+  /* ---------- 1 บิล ---------- */
+  const order = {
+    token: crypto.randomUUID(),
+    table: 7,
+    items: Array.from({ length: nLine }, (_, i) => ({
+      menuId: menu[i % menu.length].id,
+      name: menu[i % menu.length].data.name,
+      price: menu[i % menu.length].data.price,
+      qty: 1,
+    })),
+    total: 250,
+    status: "new",
+    createdAt: new Date(),
+  };
+  const orderDoc = docSize(["orders", "o" + "x".repeat(19)], order);
+  // ยกเว้น index ทุก field ยกเว้น createdAt ตาม firestore.indexes.json
+  const ORDER_INDEXED = ["createdAt"];
+  const orderIdx = Object.entries(order)
+    .filter(([k]) => ORDER_INDEXED.includes(k))
+    .reduce((s, [k, v]) => s + indexSize("orders", "o" + "x".repeat(19), k, v), 0);
+  const orderTotal = orderDoc + orderIdx;
+
+  /* ---------- stats 1 วัน ---------- */
+  const statsData = {
+    day: "2026-09-10", month: "2026-09", bills: 300, total: 78000,
+    items: Object.fromEntries(menu.map(m => [m.id, { name: m.data.name, qty: 12, amt: 900 }])),
+    updatedAt: new Date().toISOString(),
+  };
+  const statsDoc = docSize(["stats", "2026-09-10"], statsData);
+
+  /* ---------- egress ต่อการเปิดเมนู 1 ครั้ง ---------- */
+  const perView =
+      docSize(["tables", crypto.randomUUID()], { no: 7, active: true, createdAt: "2026-09-10T00:00:00Z" })
+    + docSize(["settings", "shop"], { name: "ครัวบ้านสมทรง", palette: "" })
+    + menuDocBytes;
+
+  /* ---------- reads / writes ต่อบิล ---------- */
+  const readsPerOrder = 2 * viewsPerOrder + nMenu * viewsPerOrder + 1 + 2 + 2;
+  const writesPerOrder = 3;
+
+  const LIM = { reads: 50000, writes: 20000, store: 1 * GiB, egress: 10 * GiB, host: 360 * MB };
+  const scenarios = [300, 500, 700, 1000];
+
+  const rows = scenarios.map(n => {
+    const reads = n * readsPerOrder;
+    const writes = n * writesPerOrder;
+    const store = n * days * orderTotal + days * statsDoc + menuDocBytes + menuImgBytes * 0 + menuIdxBytes;
+    const egressMo = n * viewsPerOrder * perView * 30;
+    const hostDay = n * viewsPerOrder * 70 * 1024;   // bundle HTML+CSS+JS ~70 KB
+    return { n, reads, writes, store, egressMo, hostDay };
+  });
+
+  const cap = (used, lim) => {
+    const p = pct(used, lim);
+    const left = 100 - p;
+    return `<td class="n ${p > 100 ? "bad" : "ok"}">${p.toFixed(0)}%</td>
+            <td class="n ${p > 100 ? "bad" : ""}">${left > 0 ? left.toFixed(0) + "%" : "เกิน " + (p - 100).toFixed(0) + "%"}</td>`;
+  };
+
+  const ceilOrders = {
+    reads: LIM.reads / readsPerOrder,
+    writes: LIM.writes / writesPerOrder,
+    store: (LIM.store - menuDocBytes - menuIdxBytes - days * statsDoc) / (days * orderTotal),
+    egress: LIM.egress / (viewsPerOrder * perView * 30),
+  };
+
+  document.getElementById("out").innerHTML = `
+    <h2 class="sec">1 — ผลการบีบรูปจริง</h2>
+    <div class="scroll"><table class="data">
+      <thead><tr><th>ไฟล์</th><th>ต้นฉบับ</th><th>ขนาดเดิม</th><th>หลังบีบ</th><th>ลดลง</th></tr></thead>
+      <tbody>${shrunk.map(s => `<tr>
+        <td>${s.name}</td><td class="n">${s.w}×${s.h}</td>
+        <td class="n">${fmt(s.srcBytes)}</td>
+        <td class="n"><b>${fmt(s.dataUri.length)}</b></td>
+        <td class="n ok">−${(100 - s.dataUri.length / s.srcBytes * 100).toFixed(0)}%</td></tr>`).join("")}
+      </tbody></table></div>
+    <p class="hint">ตั้งค่าที่ใช้: ย่อด้านยาวสุด ${IMAGE_MAX_PX}px · JPEG quality ${IMAGE_QUALITY} · เพดาน ${fmt(IMAGE_MAX_BYTES)}</p>
+
+    <h2 class="sec">2 — ขนาดข้อมูลจริงในฐานข้อมูล</h2>
+    <div class="scroll"><table class="data">
+      <thead><tr><th>สิ่งที่เก็บ</th><th>ขนาด</th><th>หมายเหตุ</th></tr></thead>
+      <tbody>
+        <tr><td>เมนู ${nMenu} รายการ (รวมรูป)</td><td class="n"><b>${fmt(menuDocBytes)}</b></td>
+            <td>เฉลี่ย ${fmt(menuDocBytes / nMenu)} ต่อเมนู</td></tr>
+        <tr><td>— เฉพาะรูป</td><td class="n">${fmt(menuImgBytes)}</td>
+            <td>${(menuImgBytes / menuDocBytes * 100).toFixed(0)}% ของขนาดเมนูทั้งหมด</td></tr>
+        <tr><td>— index ของเมนู</td><td class="n">${fmt(menuIdxBytes)}</td>
+            <td>ยกเว้น <code>img</code> แล้ว</td></tr>
+        <tr><td><b>1 บิล</b> (${nLine} รายการ)</td><td class="n"><b>${fmt(orderTotal)}</b></td>
+            <td>document ${fmt(orderDoc)} + index ${fmt(orderIdx)} (ยกเว้น index หมดยกเว้น createdAt)</td></tr>
+        <tr><td>สรุปยอด 1 วัน</td><td class="n">${fmt(statsDoc)}</td><td>1 doc ต่อวัน</td></tr>
+        <tr><td><b>egress ต่อการเปิดเมนู 1 ครั้ง</b></td><td class="n"><b>${fmt(perView)}</b></td>
+            <td>tables + settings + เมนูทั้งหมด</td></tr>
+      </tbody></table></div>
+
+    <h2 class="sec">3 — ต้นทุนต่อ 1 บิล</h2>
+    <div class="scroll"><table class="data">
+      <thead><tr><th>หน่วย</th><th>ต่อบิล</th><th>ที่มา</th></tr></thead>
+      <tbody>
+        <tr><td>reads</td><td class="n"><b>${readsPerOrder.toFixed(1)}</b></td>
+            <td>เมนู ${nMenu} × ${viewsPerOrder} + tables/settings ${(2 * viewsPerOrder).toFixed(1)} + rules 1 + จอหลังร้าน 4</td></tr>
+        <tr><td>writes</td><td class="n"><b>${writesPerOrder}</b></td><td>สร้างบิล + กดเสิร์ฟ + เขียนสรุปยอด</td></tr>
+        <tr><td>storage</td><td class="n"><b>${fmt(orderTotal)}</b></td><td>document + index</td></tr>
+        <tr><td>egress</td><td class="n"><b>${fmt(perView * viewsPerOrder)}</b></td><td>เปิดเมนู ${viewsPerOrder} ครั้งต่อบิล</td></tr>
+      </tbody></table></div>
+
+    <h2 class="sec">4 — ใช้โควตาฟรีไปเท่าไหร่ (เก็บ ${years} ปี)</h2>
+    <div class="scroll"><table class="data">
+      <thead><tr>
+        <th>บิล/วัน</th>
+        <th>reads/วัน</th><th>%ใช้</th><th>เหลือ</th>
+        <th>writes/วัน</th><th>%ใช้</th><th>เหลือ</th>
+        <th>storage</th><th>%ใช้</th><th>เหลือ</th>
+        <th>egress/เดือน</th><th>%ใช้</th><th>เหลือ</th>
+      </tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td><b>${r.n}</b></td>
+        <td class="n">${r.reads.toLocaleString()}</td>${cap(r.reads, LIM.reads)}
+        <td class="n">${r.writes.toLocaleString()}</td>${cap(r.writes, LIM.writes)}
+        <td class="n">${fmt(r.store)}</td>${cap(r.store, LIM.store)}
+        <td class="n">${fmt(r.egressMo)}</td>${cap(r.egressMo, LIM.egress)}
+      </tr>`).join("")}</tbody></table></div>
+
+    <h2 class="sec">5 — เพดาน: แผนฟรีรับได้กี่บิลต่อวัน</h2>
+    <div class="scroll"><table class="data">
+      <thead><tr><th>โควตา</th><th>ได้ฟรี</th><th>ตันที่</th></tr></thead>
+      <tbody>${Object.entries(ceilOrders).sort((a, b) => a[1] - b[1]).map(([k, v], i) => `<tr>
+        <td>${{ reads: "document reads", writes: "document writes", store: `storage (เก็บ ${years} ปี)`, egress: "network egress" }[k]}
+            ${i === 0 ? '<span class="bad">← คอขวด</span>' : ""}</td>
+        <td class="n">${{ reads: "50,000/วัน", writes: "20,000/วัน", store: "1 GiB", egress: "10 GiB/เดือน" }[k]}</td>
+        <td class="n"><b>${Math.floor(v).toLocaleString()} บิล/วัน</b></td></tr>`).join("")}
+      </tbody></table></div>
+
+    <pre class="out">${esc(summaryText(rows, ceilOrders, { nMenu, nLine, years, viewsPerOrder, perView, orderTotal, readsPerOrder, menuDocBytes }))}</pre>`;
+}
+
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+function summaryText(rows, ceil, x) {
+  const L = [];
+  L.push(`สรุป — เมนู ${x.nMenu} รายการ, ${x.nLine} รายการต่อบิล, เก็บ ${x.years} ปี`);
+  L.push(`เปิดเมนู 1 ครั้ง ดึงข้อมูล ${fmt(x.perView)}  |  1 บิลกินพื้นที่ ${fmt(x.orderTotal)}  |  ${x.readsPerOrder.toFixed(1)} reads ต่อบิล`);
+  L.push("");
+  for (const r of rows) {
+    const worst = Math.max(pct(r.reads, 50000), pct(r.writes, 20000), pct(r.store, GiB), pct(r.egressMo, 10 * GiB));
+    L.push(`${String(r.n).padStart(5)} บิล/วัน → ${worst > 100 ? "เกินโควตาฟรี" : "อยู่ในโควตาฟรี"} (ใช้สูงสุด ${worst.toFixed(0)}%)`);
+  }
+  L.push("");
+  const min = Object.entries(ceil).sort((a, b) => a[1] - b[1])[0];
+  L.push(`คอขวด: ${min[0]} — แผนฟรีรับได้ถึง ${Math.floor(min[1]).toLocaleString()} บิล/วัน`);
+  return L.join("\n");
+}
+
+window.__runWith = async (dataUris) => {          // ใช้ตอนทดสอบอัตโนมัติ
+  shrunk = dataUris.map((d, i) => ({ name: "test" + i, srcBytes: d.src, w: d.w, h: d.h, dataUri: d.uri }));
+  paintThumbs(); run();
+};
+</script>
+</body>
+</html>

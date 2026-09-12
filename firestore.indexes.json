@@ -1,0 +1,33 @@
+{
+  "indexes": [],
+
+  "fieldOverrides": [
+    {
+      "_comment": "menu.img เป็น data URI หลักหมื่น byte — Firestore จำกัด index entry ที่ 7.5 KiB ถ้าไม่ยกเว้นจะเขียนไม่ผ่านเลย (INVALID_ARGUMENT)",
+      "collectionGroup": "menu",
+      "fieldPath": "img",
+      "indexes": []
+    },
+    {
+      "_comment": "orders: query จริงใช้แค่ createdAt (ช่วงเวลาของวัน + เรียงลำดับ) ที่เหลือกรองในเครื่อง — ยกเว้น index ทิ้งลดพื้นที่ลงครึ่งหนึ่งและลดต้นทุน write",
+      "collectionGroup": "orders",
+      "fieldPath": "items",
+      "indexes": []
+    },
+    { "collectionGroup": "orders", "fieldPath": "token",  "indexes": [] },
+    { "collectionGroup": "orders", "fieldPath": "table",  "indexes": [] },
+    { "collectionGroup": "orders", "fieldPath": "total",  "indexes": [] },
+    { "collectionGroup": "orders", "fieldPath": "status", "indexes": [] },
+    { "collectionGroup": "orders", "fieldPath": "edited", "indexes": [] },
+
+    {
+      "_comment": "stats: query จริงใช้แค่ month ที่เหลือไม่เคยใช้",
+      "collectionGroup": "stats",
+      "fieldPath": "items",
+      "indexes": []
+    },
+    { "collectionGroup": "stats", "fieldPath": "total",     "indexes": [] },
+    { "collectionGroup": "stats", "fieldPath": "bills",     "indexes": [] },
+    { "collectionGroup": "stats", "fieldPath": "updatedAt", "indexes": [] }
+  ]
+}

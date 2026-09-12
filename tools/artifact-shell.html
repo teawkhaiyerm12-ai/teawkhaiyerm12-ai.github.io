@@ -1,0 +1,219 @@
+<meta charset="utf-8">
+<title>เดโมโต๊ะ QR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Sans+Myanmar:wght@400;600&display=swap">
+<style>
+:root{--bg:#12100D;--panel:#1C1812;--line:#332A20;--ink:#F2E9DE;--muted:#9C8C7B;--accent:#FB923C;--on:#1C1006}
+@media (prefers-color-scheme:light){:root{--bg:#F6F1EA;--panel:#FFFFFF;--line:#E4D9CB;--ink:#211610;--muted:#7C6A5C;--accent:#C2410C;--on:#fff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;font-size:15px;line-height:1.7}
+.wrap{max-width:1320px;margin:0 auto;padding:20px 20px 40px}
+h1{font-family:"Bai Jamjuree","IBM Plex Sans Thai","Leelawadee UI","Noto Sans Thai",Tahoma,system-ui,sans-serif;font-size:23px;font-weight:700;margin:0 0 3px;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:80ch}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px}
+.bar .grp{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.bar .sep{width:1px;height:26px;background:var(--line);margin:0 4px}
+button,select{font:inherit;color:inherit;cursor:pointer}
+.nb{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:100px;
+  padding:6px 15px;font-size:13.5px;white-space:nowrap}
+.nb:hover{color:var(--ink);border-color:var(--muted)}
+.nb[aria-pressed="true"]{background:var(--accent);color:var(--on);border-color:var(--accent);font-weight:600}
+select.nb{padding:6px 10px}
+.lbl{font-size:12px;color:var(--muted);margin-right:2px}
+.stage{display:grid;place-items:start center;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;padding:16px;overflow:auto}
+#frame{border:0;background:#fff;border-radius:10px;box-shadow:0 20px 50px -30px rgba(0,0,0,.7);
+  width:100%;height:820px;transition:width .25s ease}
+.hint{color:var(--muted);font-size:12.5px;margin:12px 0 0;line-height:1.8}
+.hint code{background:var(--line);padding:1px 6px;border-radius:3px;font-family:"IBM Plex Mono",ui-monospace,"Leelawadee UI","Noto Sans Thai",Tahoma,monospace;font-size:11.5px}
+.acct{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+.acct div{border:1px solid var(--line);border-radius:8px;padding:8px 13px;font-size:12.5px;line-height:1.7}
+.acct b{font-size:13.5px}
+.acct span{font-family:"IBM Plex Mono",ui-monospace,"Leelawadee UI","Noto Sans Thai",Tahoma,monospace;color:var(--accent)}
+</style>
+
+<div class="wrap">
+  <h1>เดโมโต๊ะ QR — ทั้งระบบในลิงก์เดียว</h1>
+  <p class="sub">หน้าเว็บทุกหน้าคือโค้ดจริงของระบบ เปลี่ยนแค่ Firebase เป็นตัวจำลองที่เก็บข้อมูลในเบราว์เซอร์
+    กดสั่งจากหน้าลูกค้า แล้วสลับไปจอหลังร้าน จะเห็นออเดอร์จริง ๆ</p>
+
+  <div class="bar">
+    <span class="lbl">หน้า</span>
+    <div class="grp" id="nav"></div>
+    <div class="sep"></div>
+    <span class="lbl">โต๊ะ</span>
+    <select class="nb" id="tablePick"></select>
+    <div class="sep"></div>
+    <span class="lbl">ขนาดจอ</span>
+    <div class="grp" id="sizes"></div>
+    <div class="sep"></div>
+    <button class="nb" id="reset">รีเซ็ตข้อมูล</button>
+  </div>
+
+  <div class="stage"><iframe id="frame" title="หน้าจอระบบ"></iframe></div>
+
+  <div class="acct">
+    <div><b>ผู้จัดการ</b><br><span>manager@demo.local / 123456</span><br>เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน</div>
+    <div><b>พนักงานหน้าร้าน</b><br><span>staff@demo.local / 123456</span><br>เห็นเฉพาะออเดอร์ + ยอดวันนี้</div>
+  </div>
+  <p class="hint">
+    หน้าล็อกอินมีปุ่มกรอกบัญชีให้อัตโนมัติ · ข้อมูลเก็บใน <code>localStorage</code> ของเบราว์เซอร์คุณเท่านั้น
+    ไม่ได้ต่อ Firebase · กดรีเซ็ตเพื่อเริ่มใหม่<br>
+    ระบบจริงบังคับสิทธิ์ด้วย <code>firestore.rules</code> ฝั่ง server — ในเดโมนี้จำลองเฉพาะการซ่อนเมนูตามบทบาท
+  </p>
+</div>
+
+<script>
+var SHARED = __SHARED__;
+var PAGES_JS = __PAGES__;
+var APPCSS = __APPCSS__;
+var SEED = __SEED__;
+var TAG_OPEN = "<" + "script>";
+var TAG_CLOSE = "<" + "/script>";
+
+function rid() {
+  return Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12);
+}
+function seed(force) {
+  if (!force && localStorage.getItem("mock-firestore-seeded")) return;
+  ["mock-firestore", "mock-firestore-v", "mock-auth-user", "qr-order-settings"]
+    .forEach(function (k) { localStorage.removeItem(k); });
+  var db = {};
+  db["settings/shop"] = { name: "ครัวบ้านสมทรง", palette: "" };
+  db["settings/roles"] = { managers: ["u_manager"], staff: ["u_staff"] };
+  SEED.tables.forEach(function (no) {
+    db["tables/" + rid()] = { no: no, active: true, createdAt: new Date().toISOString() };
+  });
+  SEED.menu.forEach(function (m, i) {
+    db["menu/" + rid()] = { name: m.name, price: m.price, cat: m.cat,
+                            sort: i * 10, emoji: "🍽️", img: m.img, soldout: false };
+  });
+  localStorage.setItem("mock-firestore", JSON.stringify(db));
+  localStorage.setItem("mock-firestore-seeded", "1");
+}
+seed(false);
+
+function tables() {
+  var db = JSON.parse(localStorage.getItem("mock-firestore") || "{}");
+  return Object.keys(db)
+    .filter(function (p) { return p.indexOf("tables/") === 0; })
+    .map(function (p) { return { token: p.split("/")[1], no: db[p].no }; })
+    .sort(function (a, b) { return a.no - b.no; });
+}
+
+var LOADING = '<p class="loading">กำลังโหลด…</p>';
+var ADMIN_BODY = '<div id="chrome"></div><main id="view">' + LOADING + '</main>';
+var PAGES = {
+  "/t":            { js: "customer", body: '<div id="app"><div class="center-msg"><div class="box">' + LOADING + '</div></div></div>' },
+  "/admin":        { js: "admin-orders", body: ADMIN_BODY, login: true },
+  "/admin/menu":   { js: "admin-menu",   body: ADMIN_BODY },
+  "/admin/report": { js: "admin-report", body: ADMIN_BODY },
+  "/admin/tables": { js: "admin-tables", body: ADMIN_BODY, qr: true }
+};
+var NAV = [["/t", "มือถือลูกค้า"], ["/admin", "จอหลังร้าน"], ["/admin/menu", "จัดการเมนู"],
+           ["/admin/report", "ยอดขาย"], ["/admin/tables", "โต๊ะ & QR"]];
+var SIZES = [["มือถือ", 390], ["แท็บเล็ต", 820], ["เต็มจอ", 0]];
+
+var route = "/t", size = 390, token = null;
+var frame = document.getElementById("frame");
+
+function shim() {
+  return TAG_OPEN +
+    'window.__nav=function(p){parent.postMessage({__nav:p},"*")};' +
+    'window.__ORIGIN__="https://your-shop.web.app";' +
+    'window.__TOKEN__=' + JSON.stringify(token || "") + ';' +
+    'document.addEventListener("click",function(e){' +
+      'var a=e.target.closest&&e.target.closest("a[href^=\'/\']");' +
+      'if(a){e.preventDefault();window.__nav(a.getAttribute("href"))}},true);' +
+    'try{var s=JSON.parse(localStorage.getItem("qr-order-settings")||"null");' +
+      'if(s&&s.palette)document.documentElement.setAttribute("data-palette",s.palette)}catch(e){}' +
+    TAG_CLOSE;
+}
+
+var ACCOUNTS = [
+  { r: "ผู้จัดการ", e: "manager@demo.local", p: "123456", n: "เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน" },
+  { r: "พนักงานหน้าร้าน", e: "staff@demo.local", p: "123456", n: "เห็นเฉพาะออเดอร์ + ยอดวันนี้" }
+];
+
+function loginHelper() {
+  return TAG_OPEN + "(function(){var A=" + JSON.stringify(ACCOUNTS) + ";" +
+    'var t=setInterval(function(){var f=document.getElementById("f");if(!f)return;clearInterval(t);' +
+    'if(document.getElementById("acc"))return;' +
+    'var d=document.createElement("div");d.id="acc";' +
+    'd.style.cssText="margin-top:16px;border-top:1px dashed var(--line);padding-top:14px";' +
+    'var h="<div style=\'font-size:12px;font-weight:600;color:var(--muted);margin-bottom:9px\'>บัญชีทดสอบ (กดเพื่อกรอกให้)</div>";' +
+    'for(var i=0;i<A.length;i++){var a=A[i];' +
+    'h+="<button type=\'button\' data-i=\'"+i+"\' style=\'width:100%;text-align:left;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:9px 12px;margin-bottom:7px;line-height:1.55\'>"' +
+    '+"<b style=\'font-size:13.5px\'>"+a.r+"</b><br>"' +
+    '+"<span style=\'font-family:ui-monospace,monospace;font-size:12px;color:var(--accent-ink)\'>"+a.e+" / "+a.p+"</span><br>"' +
+    '+"<span style=\'font-size:11.5px;color:var(--muted)\'>"+a.n+"</span></button>";}' +
+    'd.innerHTML=h;f.appendChild(d);' +
+    'd.addEventListener("click",function(e){var b=e.target.closest("[data-i]");if(!b)return;' +
+    'var a=A[+b.dataset.i];document.getElementById("em").value=a.e;document.getElementById("pw").value=a.p;});' +
+    "},120)})();" + TAG_CLOSE;
+}
+
+function render() {
+  var p = PAGES[route];
+  frame.style.width = size ? size + "px" : "100%";
+  frame.style.height = (route === "/t" ? (size === 390 ? 800 : 900) : 820) + "px";
+  frame.srcdoc =
+    '<!doctype html><html lang="th"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">' +
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Sans+Myanmar:wght@400;600&display=swap">' +
+    "<style>" + APPCSS + "</style>" +
+    (p.qr ? '<' + 'script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">' + TAG_CLOSE : "") +
+    shim() +
+    "</head><body>" + p.body +
+    TAG_OPEN + SHARED + TAG_CLOSE +
+    TAG_OPEN + "(async function(){" + PAGES_JS[p.js] + "})();" + TAG_CLOSE +
+    (p.login ? loginHelper() : "") +
+    "</body></html>";
+}
+
+addEventListener("message", function (e) {
+  var p = e.data && e.data.__nav;
+  if (!p) return;
+  route = PAGES[p] ? p : (p.indexOf("/admin") === 0 ? "/admin" : route);
+  paintNav();
+  render();
+});
+
+function paintNav() {
+  document.getElementById("nav").innerHTML = NAV.map(function (n) {
+    return '<button class="nb" data-r="' + n[0] + '" aria-pressed="' + (n[0] === route) + '">' + n[1] + "</button>";
+  }).join("");
+  document.getElementById("sizes").innerHTML = SIZES.map(function (n) {
+    return '<button class="nb" data-w="' + n[1] + '" aria-pressed="' + (n[1] === size) + '">' + n[0] + "</button>";
+  }).join("");
+}
+document.getElementById("nav").onclick = function (e) {
+  var b = e.target.closest("[data-r]"); if (!b) return;
+  route = b.dataset.r; paintNav(); render();
+};
+document.getElementById("sizes").onclick = function (e) {
+  var b = e.target.closest("[data-w]"); if (!b) return;
+  size = +b.dataset.w; paintNav(); render();
+};
+var pick = document.getElementById("tablePick");
+function paintTables() {
+  var ts = tables();
+  var ok = token && ts.some(function (t) { return t.token === token; });
+  token = ok ? token : (ts[0] || {}).token;
+  pick.innerHTML = ts.map(function (t) {
+    return '<option value="' + t.token + '"' + (t.token === token ? " selected" : "") + ">โต๊ะ " + t.no + "</option>";
+  }).join("");
+}
+pick.onchange = function () { token = pick.value; if (route === "/t") render(); };
+document.getElementById("reset").onclick = function () {
+  if (!confirm("ล้างข้อมูลจำลองทั้งหมดแล้วเริ่มใหม่?")) return;
+  seed(true); token = null; paintTables(); render();
+};
+
+paintTables();
+paintNav();
+render();
+</script>

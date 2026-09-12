@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    //  สิทธิ์ 2 ระดับ
+    //    manager — เจ้าของ/ผู้จัดการ: แก้เมนู ราคา รูป โต๊ะ ดูยอดย้อนหลัง
+    //    staff   — พนักงานหน้าร้าน: เห็นเฉพาะออเดอร์วันนี้ กดเสิร์ฟ แก้บิล
+    //
+    //  รายชื่อ uid อยู่ใน doc  settings/roles = { managers: [...], staff: [...] }
+    //  แก้จาก Firebase Console เท่านั้น ไม่มีใครเขียนได้จากในแอป (กัน privilege escalation)
+    //  เพิ่ม/ลดพนักงาน = แก้ doc ไม่ต้อง deploy rules ใหม่
+    //
+    //  OWNER_UID ข้างล่างเป็นกุญแจสำรอง เผื่อ doc roles หายหรือพัง จะได้ไม่ล็อกตัวเองออก
+    //  ใส่ uid เจ้าของร้านไว้ทั้งใน rules นี้ และใน settings/roles.managers
+    // ============================================================
+
+    function rolesPath() {
+      return /databases/$(database)/documents/settings/roles;
+    }
+    function roleList(key) {
+      return exists(rolesPath()) ? get(rolesPath()).data.get(key, []) : [];
+    }
+    function isOwner() {
+      return request.auth != null && request.auth.uid == 'PASTE_UID_OWNER';
+    }
+    function isManager() {
+      return isOwner() || (request.auth != null && request.auth.uid in roleList('managers'));
+    }
+    function isStaff() {
+      return request.auth != null && request.auth.uid in roleList('staff');
+    }
+    function isTeam() {
+      return isManager() || isStaff();
+    }
+
+    // ---------- ตั้งค่าร้าน ----------
+    // shop เปิดให้ลูกค้าอ่าน (ต้องใช้ชื่อร้านบนหน้าเมนู) แต่ roles ห้ามหลุดออกไปข้างนอก
+    match /settings/shop {
+      allow get: if true;
+      allow write: if isManager();
+    }
+    match /settings/roles {
+      allow get: if isTeam();      // แอปอ่านเพื่อรู้ว่าตัวเองเป็น manager หรือ staff
+      allow write: if false;       // แก้ได้จาก Console เท่านั้น
+    }
+
+    // ---------- เมนู ----------
+    // ลูกค้าอ่านได้ทุกคน แก้ได้เฉพาะ manager (พนักงานหน้าร้านแก้ราคาไม่ได้)
+    match /menu/{itemId} {
+      allow get, list: if true;
+      allow create, update: if isManager() && isValidMenuItem();
+      allow delete: if isManager();
+    }
+
+    function isValidMenuItem() {
+      let m = request.resource.data;
+      return m.name is string && m.name.size() > 0 && m.name.size() <= 60
+          && m.price is number && m.price >= 0 && m.price <= 20000
+          // รูปเก็บเป็น data URI — จำกัดขนาดที่ฝั่ง server ด้วย ไม่เชื่อ client อย่างเดียว
+          // 60,000 ตัวอักษร ≈ 44 KB เผื่อจาก IMAGE_MAX_BYTES (40 KB) ไว้เล็กน้อย
+          && (!('img' in m) || m.img == null
+              || (m.img is string && m.img.size() <= 60000 && m.img.matches('^data:image/(jpeg|webp);base64,.*')));
+    }
+
+    // ---------- โต๊ะ ----------
+    // เปิดได้ทีละใบถ้ารู้ token แต่ไล่ดูทั้งคอลเลกชันไม่ได้
+    match /tables/{token} {
+      allow get:    if true;
+      allow list:   if isTeam();
+      allow write:  if isManager();
+    }
+
+    // ---------- ออเดอร์ ----------
+    // ลูกค้าสร้างได้อย่างเดียว อ่านไม่ได้เลย / พนักงานเห็นและแก้ได้ / ลบได้เฉพาะ manager
+    match /orders/{orderId} {
+      allow create: if isValidNewOrder();
+      allow get, list: if isTeam();
+      allow update: if isTeam() && resource.data.status != 'done';
+      allow delete: if isManager();
+    }
+
+    function isValidNewOrder() {
+      let o = request.resource.data;
+      return exists(/databases/$(database)/documents/tables/$(o.token))
+          && o.keys().hasOnly(['token', 'table', 'items', 'total', 'status', 'createdAt'])
+          && o.keys().hasAll(['token', 'table', 'items', 'total', 'status', 'createdAt'])
+          && o.status == 'new'
+          && o.createdAt == request.time          // ต้องส่ง serverTimestamp() มาเท่านั้น
+          && o.token is string
+          && o.table is int && o.table > 0 && o.table <= 999
+          && o.items is list
+          && o.items.size() >= 1 && o.items.size() <= 30
+          && o.total is number && o.total > 0 && o.total <= 20000;
+    }
+
+    // ---------- ยอดขายรายวัน ----------
+    // พนักงานเขียนได้ (จอออเดอร์สรุปยอดวันนี้ให้อัตโนมัติ) แต่ดูย้อนหลังไม่ได้
+    // ยอดขายวันนี้ที่พนักงานเห็น คำนวณจากออเดอร์ของวันนั้นในเครื่อง ไม่ได้อ่านจากที่นี่
+    match /stats/{day} {
+      allow read:  if isManager();
+      allow write: if isTeam();
+    }
+
+    // ---------- ปิดตายทุก path ที่เหลือ ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดูหน้าเมนูลูกค้าหลังบีบรูป — โต๊ะ QR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../public/assets/app.css">
+<script>
+// สคริปต์ธรรมดา (ไม่ใช่ module) — ทำงานได้แม้ ES module จะโหลดไม่ขึ้น
+window.__booted = false;
+window.addEventListener("DOMContentLoaded", function () {
+  var bar = document.getElementById("status");
+  if (location.protocol === "file:") {
+    bar.className = "statusbar bad";
+    bar.innerHTML = "<b>เปิดหน้านี้ด้วยการดับเบิลคลิกไฟล์ไม่ได้</b><br>" +
+      "เบราว์เซอร์บล็อก ES module บน <code>file://</code> สคริปต์เลยไม่ทำงานทั้งหน้า<br><br>" +
+      "เปิดแบบนี้แทน — ที่โฟลเดอร์ <code>qr-order</code> รัน:<br>" +
+      "<code>python -m http.server 8000</code><br>" +
+      "แล้วเปิด <code>http://localhost:8000/tools/menu-preview.html</code>";
+    return;
+  }
+  setTimeout(function () {
+    if (window.__booted) return;
+    bar.className = "statusbar bad";
+    bar.innerHTML = "<b>สคริปต์ไม่ทำงาน</b><br>" +
+      "เช็คว่าเสิร์ฟจากโฟลเดอร์ <code>qr-order</code> (ไม่ใช่ <code>tools</code>) " +
+      "เพราะหน้านี้เรียกไฟล์ที่ <code>../public/assets/</code><br>" +
+      "กด F12 ดูแท็บ Console จะเห็นสาเหตุจริง";
+  }, 2500);
+});
+</script>
+<style>
+  .drop{border:2px dashed var(--muted);border-radius:8px;padding:24px;text-align:center;
+    background:var(--surface);color:var(--muted);cursor:pointer}
+  .drop.over{border-color:var(--accent);background:var(--accent-wash);color:var(--ink)}
+  .split{display:grid;grid-template-columns:392px minmax(0,1fr);gap:34px;align-items:start;margin-top:22px}
+  @media(max-width:1000px){.split{grid-template-columns:1fr}}
+  .phone{width:min(392px,100%);height:760px;background:#0B0F0D;border-radius:44px;padding:11px;
+    box-shadow:0 30px 60px -30px rgba(0,0,0,.55);position:relative}
+  .notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:112px;height:26px;
+    background:#0B0F0D;border-radius:0 0 16px 16px;z-index:6}
+  .screen{width:100%;height:100%;border-radius:34px;overflow:hidden;background:var(--surface);position:relative}
+  .screen .cust{position:absolute;inset:0;min-height:0}
+  .screen .list{overflow-y:auto}
+  .screen .cust-top,.screen .chips{position:static}
+  .screen .cartbar{position:absolute}
+  .cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .cmp figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+  .cmp img{width:100%;display:block;background:var(--tile)}
+  .cmp figcaption{padding:9px 12px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line)}
+  .cmp figcaption b{color:var(--ink)}
+  .zoomrow{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:8px}
+  .zoomrow div{text-align:center;font-size:11px;color:var(--muted)}
+  .zoomrow img{display:block;border-radius:8px;border:1px solid var(--line);object-fit:cover;background:var(--tile)}
+  table.data{border-collapse:collapse;width:100%;font-size:14px}
+  table.data th,table.data td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left}
+  table.data th{background:var(--surface-2);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+  table.data td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .net{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .net span{border:1px solid var(--line);border-radius:100px;padding:3px 12px;font-size:13px;background:var(--surface)}
+  .statusbar{border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:14px;line-height:1.7}
+  .statusbar.wait{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+  .statusbar.ok{background:var(--accent-wash);color:var(--accent-ink);border:1px solid var(--accent)}
+  .statusbar.bad{background:var(--chili-wash);color:var(--chili);border:1px solid var(--chili)}
+  .statusbar code{background:rgba(0,0,0,.15);padding:1px 6px;border-radius:3px;font-family:"IBM Plex Mono",monospace}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="phead">
+    <div>
+      <h1>หน้าเมนูที่ลูกค้าเห็นหลังสแกน QR</h1>
+      <p class="hint">รูปถูกบีบด้วย <code>shrinkImage()</code> ตัวจริงของระบบ แล้วเอามาแสดงด้วย CSS ชุดเดียวกับหน้า
+        <code>/t/&lt;token&gt;</code> — สิ่งที่เห็นในกรอบมือถือคือของจริงทุกพิกเซล</p>
+    </div>
+  </div>
+
+  <div class="statusbar wait" id="status">กำลังโหลดสคริปต์…</div>
+
+  <div class="card">
+    <label class="drop" id="drop" for="file">
+      <b>กดตรงนี้เพื่อเลือกรูปอาหารจริง</b> (เลือกหลายไฟล์พร้อมกันได้) หรือลากมาวาง — ระบบ clone ให้ครบ 20 เมนูเอง
+    </label>
+    <input type="file" id="file" accept="image/*" multiple hidden>
+    <div class="net" id="cfg"></div>
+    <div style="margin-top:12px">
+      <button class="btn" id="real">โหลดรูปอาหารไทยจริง 20 รูป</button>
+      <button class="btn ghost" id="sample">รูปสังเคราะห์ (เช็คว่าหน้าทำงาน)</button>
+    </div>
+  </div>
+
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import { shrinkImage } from "../public/assets/core.js";
+import { IMAGE_MAX_PX, IMAGE_QUALITY, IMAGE_MAX_BYTES } from "../public/assets/config.js";
+
+document.getElementById("cfg").innerHTML =
+  `<span>ย่อด้านยาวสุด <b>${IMAGE_MAX_PX}px</b></span>
+   <span>JPEG quality <b>${IMAGE_QUALITY}</b></span>
+   <span>เพดาน <b>${(IMAGE_MAX_BYTES/1024).toFixed(0)} KB</b>/รูป</span>`;
+
+const MENU = [
+  ["แนะนำ","เย็นตาโฟทะเลรวม",70],["แนะนำ","ข้าวไข่ดาว",45],["แนะนำ","ต้มยำกุ้งน้ำข้น",150],
+  ["แนะนำ","ผัดไทยกุ้งสด",90],["ข้าว","ข้าวกะเพราหมูสับไข่ดาว",65],["ข้าว","ข้าวผัดกุ้ง",80],
+  ["ข้าว","ข้าวหมูกรอบ",70],["ข้าว","ข้าวมันไก่",60],["ข้าว","ข้าวเปล่า",15],
+  ["เส้น","ก๋วยเตี๋ยวต้มยำหมู",60],["เส้น","ราดหน้าหมูหมัก",65],["เส้น","บะหมี่เกี๊ยวกุ้ง",70],
+  ["ทานเล่น","ปีกไก่ทอดน้ำปลา",90],["ทานเล่น","ไข่เจียวหมูสับ",45],["ทานเล่น","หมูสะเต๊ะ",80],
+  ["ทานเล่น","ส้มตำไทย",60],["เครื่องดื่ม","ชาเย็น",35],["เครื่องดื่ม","น้ำมะนาวโซดา",45],
+  ["เครื่องดื่ม","น้ำเปล่า",15],["เครื่องดื่ม","โค้ก",25],
+];
+const CATS = ["แนะนำ","ข้าว","เส้น","ทานเล่น","เครื่องดื่ม"];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const baht = n => Number(n).toLocaleString("th-TH");
+const kb = b => (b/1024).toFixed(1) + " KB";
+
+let shots = [];   // {name, srcBytes, w, h, srcUrl, uri, outW, outH}
+let menuOverride = null;   // ใช้ชื่อจานจริงเมื่อโหลดรูปชุดตัวอย่าง
+
+const drop = document.getElementById("drop"), fileInput = document.getElementById("file");
+const status = document.getElementById("status");
+window.__booted = true;
+status.className = "statusbar ok";
+status.textContent = "พร้อมใช้งาน — เลือกรูปอาหารได้เลย";
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); take(e.dataTransfer.files); };
+fileInput.onchange = () => take(fileInput.files);
+
+async function take(files) {
+  status.className = "statusbar wait";
+  status.textContent = `กำลังบีบรูป ${files.length} ไฟล์…`;
+  for (const f of files) {
+    if (!/^image\//.test(f.type)) continue;
+    const srcUrl = URL.createObjectURL(f);
+    const [w, h] = await new Promise(r => { const i = new Image(); i.onload = () => r([i.width, i.height]); i.src = srcUrl; });
+    try {
+      const uri = await shrinkImage(f);
+      const [ow, oh] = await new Promise(r => { const i = new Image(); i.onload = () => r([i.width, i.height]); i.src = uri; });
+      shots.push({ name: f.name, srcBytes: f.size, w, h, srcUrl, uri, outW: ow, outH: oh });
+    } catch (e) { alert(f.name + ": " + e.message); }
+  }
+  if (shots.length) {
+    render();
+    status.className = "statusbar ok";
+    status.textContent = `เสร็จแล้ว — ใส่รูป ${shots.length} ใบ สร้างเมนู 20 รายการ`;
+  } else {
+    status.className = "statusbar bad";
+    status.textContent = "ไม่มีไฟล์รูปที่ใช้ได้ — เลือกไฟล์ .jpg .png .webp หรือ .heic";
+  }
+}
+
+
+/* ---------- ชุดรูปอาหารไทยจริง 20 รูป ----------
+   ดาวน์โหลดไว้ล่วงหน้าที่ tools/sample-photos/ จาก TheMealDB (ใช้ทดสอบเท่านั้น)
+   ร้านจริงต้องใช้รูปของร้านเอง                                              */
+const TH_NAME = {
+  "Drunken noodles (pad kee mao)": ["เส้น", "ผัดขี้เมาเส้นใหญ่", 75],
+  "Lemongrass beef stew with noodles": ["เส้น", "ก๋วยเตี๋ยวเนื้อตุ๋นตะไคร้", 90],
+  "Massaman Beef curry": ["แนะนำ", "มัสมั่นเนื้อ", 140],
+  "Pad See Ew": ["เส้น", "ผัดซีอิ๊วหมู", 65],
+  "Pad Thai": ["แนะนำ", "ผัดไทยกุ้งสด", 90],
+  "Panang chicken curry (kaeng panang gai)": ["แนะนำ", "พะแนงไก่", 95],
+  "Prawn stir-fry": ["ทานเล่น", "กุ้งผัดพริกไทยดำ", 120],
+  "Red curry chicken kebabs": ["ทานเล่น", "ไก่ย่างแกงแดง", 85],
+  "Spicy Thai prawn noodles": ["เส้น", "ก๋วยเตี๋ยวต้มยำกุ้ง", 80],
+  "Stir-fried chicken with chillies & basil": ["ข้าว", "ข้าวกะเพราไก่ไข่ดาว", 65],
+  "Thai beef stir-fry": ["ข้าว", "ข้าวผัดพริกแกงเนื้อ", 85],
+  "Thai chicken cakes with sweet chilli sauce": ["ทานเล่น", "ทอดมันไก่", 70],
+  "Thai coconut & veg broth": ["แนะนำ", "แกงจืดกะทิผัก", 60],
+  "Thai curry noodle soup": ["เส้น", "ข้าวซอยไก่", 80],
+  "Thai drumsticks": ["ทานเล่น", "ปีกไก่ทอดน้ำปลา", 90],
+  "Thai fried rice with prawns & peas": ["ข้าว", "ข้าวผัดกุ้ง", 80],
+  "Thai green chicken soup": ["แนะนำ", "ต้มข่าไก่", 75],
+  "Thai Green Curry": ["แนะนำ", "แกงเขียวหวานไก่", 85],
+  "Thai pork & peanut curry": ["ข้าว", "ข้าวแกงกะหรี่หมู", 75],
+  "Thai prawn curry": ["แนะนำ", "แกงคั่วกุ้ง", 130],
+};
+
+document.getElementById("real").onclick = async () => {
+  status.className = "statusbar wait";
+  status.textContent = "กำลังโหลดรูปอาหารจริง 20 รูป…";
+  let idx;
+  try {
+    idx = await (await fetch("sample-photos/index.json")).json();
+  } catch (e) {
+    status.className = "statusbar bad";
+    status.innerHTML = "ไม่พบชุดรูปตัวอย่าง — สร้างก่อนด้วย <code>tools/fetch-sample-photos.py</code>";
+    return;
+  }
+  shots = []; menuOverride = [];
+  const files = [];
+  for (const row of idx) {
+    const blob = await (await fetch("sample-photos/" + row.file)).blob();
+    files.push(new File([blob], row.file, { type: blob.type || "image/jpeg" }));
+    const th = TH_NAME[row.name] || ["แนะนำ", row.name, 80];
+    menuOverride.push(th);
+  }
+  await take(files);
+};
+
+/* รูปสังเคราะห์ สำหรับเช็คว่าหน้ายังทำงานอยู่โดยไม่ต้องหาไฟล์ */
+document.getElementById("sample").onclick = async () => {
+  shots = []; menuOverride = null;
+  status.className = "statusbar wait";
+  status.textContent = "กำลังสร้างรูปตัวอย่าง…";
+  const mk = (w, h, pal, seed) => {
+    let s2 = seed;
+    const rnd = () => (s2 = (s2 * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const g = c.getContext("2d");
+    const bg = g.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, pal[0]); bg.addColorStop(.5, pal[1]); bg.addColorStop(1, pal[2]);
+    g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 300; i++) {
+      const x = rnd() * w, y = rnd() * h, r = (.02 + rnd() * .15) * Math.min(w, h);
+      const rg = g.createRadialGradient(x, y, 0, x, y, r);
+      const col = pal[Math.floor(rnd() * pal.length)];
+      rg.addColorStop(0, col); rg.addColorStop(1, col.replace("rgb", "rgba").replace(")", ",0)"));
+      g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+    }
+    const im = g.getImageData(0, 0, w, h), d = im.data;
+    for (let i = 0; i < d.length; i += 4) { const n = (rnd() - .5) * 34; d[i] += n; d[i+1] += n*.9; d[i+2] += n*1.1; }
+    g.putImageData(im, 0, 0);
+    return c;
+  };
+  const P1 = ["rgb(250,120,140)","rgb(255,205,200)","rgb(210,60,80)","rgb(120,170,90)","rgb(250,225,140)"];
+  const P2 = ["rgb(250,248,242)","rgb(245,190,60)","rgb(230,175,110)","rgb(255,255,250)","rgb(200,150,80)"];
+  const out = [];
+  for (const [c, n] of [[mk(600, 400, P1, 12345), "ตัวอย่าง-600x400.png"], [mk(1500, 1500, P2, 67890), "ตัวอย่าง-1500x1500.png"]]) {
+    const b = await new Promise(r => c.toBlob(r, "image/png"));
+    out.push(new File([b], n, { type: "image/png" }));
+  }
+  take(out);
+};
+
+function render() {
+  const src = menuOverride || MENU;
+  const items = src.map(([cat, name, price], i) => ({ cat, name, price, img: shots[i % shots.length].uri }));
+  const payload = items.reduce((a, m) => a + m.img.length, 0) + 2048;
+
+  document.getElementById("out").innerHTML = `
+    <div class="split">
+      <div>
+        <p class="hint" style="margin:0 0 10px">มือถือลูกค้าหลังสแกน QR โต๊ะ 7</p>
+        <div class="phone"><div class="notch"></div><div class="screen" id="screen"></div></div>
+      </div>
+      <div>
+        <h2 class="sec" style="margin-top:0">รูปที่ใส่เข้าไป — ก่อน / หลังบีบ</h2>
+        <div class="cmp">${shots.map(s => `
+          <figure>
+            <img src="${s.uri}" alt="">
+            <figcaption>
+              <b>${esc(s.name)}</b><br>
+              ต้นฉบับ ${s.w}×${s.h} · ${kb(s.srcBytes)}<br>
+              หลังบีบ <b>${s.outW}×${s.outH} · ${kb(s.uri.length)}</b>
+              <span style="color:var(--accent-ink);font-weight:600">−${(100 - s.uri.length/s.srcBytes*100).toFixed(0)}%</span>
+            </figcaption>
+          </figure>`).join("")}</div>
+
+        <h2 class="sec">ขนาดที่ลูกค้าเห็นจริงบนจอ</h2>
+        <div class="zoomrow">${shots.slice(0,1).map(s => `
+          <div><img src="${s.uri}" style="width:82px;height:82px"><br>82px<br>(ในเมนู)</div>
+          <div><img src="${s.uri}" style="width:164px;height:164px"><br>164px<br>(จอ retina)</div>
+          <div><img src="${s.uri}" style="width:${s.outW}px;height:${s.outH}px;max-width:340px"><br>${s.outW}px<br>(ขนาดไฟล์เต็ม)</div>
+        `).join("")}</div>
+        <p class="hint">ในหน้าเมนูรูปแสดงที่ 82px แต่ไฟล์เก็บไว้ ${shots[0].outW}px — จอ retina 2x ยังคมอยู่</p>
+
+        <h2 class="sec">ลูกค้าต้องโหลดกี่ไบต์</h2>
+        <table class="data">
+          <tbody>
+            <tr><td>เมนู ${items.length} รายการ (รูปทั้งหมด)</td><td class="n"><b>${kb(payload)}</b></td></tr>
+            <tr><td>เฉลี่ยต่อเมนู</td><td class="n">${kb(payload/items.length)}</td></tr>
+            <tr><td>เวลาโหลดบน 4G (~12 Mbps)</td><td class="n">${(payload*8/12e6).toFixed(2)} วิ</td></tr>
+            <tr><td>เวลาโหลดบน 3G ช้า (~1.5 Mbps)</td><td class="n">${(payload*8/1.5e6).toFixed(1)} วิ</td></tr>
+            <tr><td>Wi-Fi ร้าน (~30 Mbps)</td><td class="n">${(payload*8/30e6).toFixed(2)} วิ</td></tr>
+          </tbody>
+        </table>
+        <p class="hint">รูปโหลดแบบ lazy — ลูกค้าเห็นรายการแรกทันที ที่เหลือทยอยโหลดตอนเลื่อน</p>
+      </div>
+    </div>`;
+
+  paintPhone(items);
+}
+
+/* ใช้ markup + class เดียวกับ customer.js เป๊ะ ๆ */
+function paintPhone(items) {
+  const cart = new Map();
+  const host = document.getElementById("screen");
+  host.innerHTML = `
+    <div class="cust">
+      <div class="cust-top">
+        <div class="shop">ครัวบ้านสมทรง</div>
+        <div class="tb"><span class="tbadge">โต๊ะ 7</span><span>เลือกอาหารแล้วกดสั่ง</span></div>
+      </div>
+      <div class="chips" role="group">
+        <button class="chip" aria-pressed="true">ทั้งหมด</button>
+        ${CATS.map(c => `<button class="chip" aria-pressed="false">${esc(c)}</button>`).join("")}
+      </div>
+      <div class="list"></div>
+      <div class="cartbar"><div class="sumline"><span class="cnt"></span><b class="tot"></b></div>
+        <button class="submit">ส่งออเดอร์ไปที่ครัว</button></div>
+    </div>`;
+
+  const list = host.querySelector(".list"), bar = host.querySelector(".cartbar");
+
+  const paint = () => {
+    list.innerHTML = CATS.map(c => {
+      const rows = items.filter(m => m.cat === c);
+      if (!rows.length) return "";
+      return `<div class="sechead">${esc(c)}</div>` + rows.map(m => {
+        const q = cart.get(m.name) || 0;
+        return `<div class="item pic">
+          <div class="ph"><img src="${m.img}" alt="" loading="lazy"></div>
+          <div class="info"><div class="nm">${esc(m.name)}</div>
+            <div class="pr">${baht(m.price)} บาท</div></div>
+          ${q === 0
+            ? `<button class="add" data-add="${esc(m.name)}">+</button>`
+            : `<div class="stepper"><button data-sub="${esc(m.name)}">−</button>
+                 <span class="q">${q}</span><button data-add="${esc(m.name)}">+</button></div>`}
+        </div>`;
+      }).join("");
+    }).join("");
+  };
+  const paintCart = () => {
+    const n = [...cart.values()].reduce((a, b) => a + b, 0);
+    const total = [...cart.entries()].reduce((a, [k, v]) => a + items.find(m => m.name === k).price * v, 0);
+    bar.classList.toggle("show", n > 0);
+    bar.querySelector(".cnt").textContent = `${n} รายการ`;
+    bar.querySelector(".tot").textContent = `${baht(total)} บาท`;
+  };
+  list.onclick = e => {
+    const a = e.target.closest("[data-add]"), s = e.target.closest("[data-sub]");
+    if (a) cart.set(a.dataset.add, (cart.get(a.dataset.add) || 0) + 1);
+    else if (s) { const q = (cart.get(s.dataset.sub) || 0) - 1; q > 0 ? cart.set(s.dataset.sub, q) : cart.delete(s.dataset.sub); }
+    else return;
+    paint(); paintCart();
+  };
+  paint(); paintCart();
+}
+
+window.__feed = take;
+</script>
+</body>
+</html>

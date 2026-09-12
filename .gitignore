@@ -1,0 +1,18 @@
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.DS_Store
+Thumbs.db
+node_modules/
+*.local
+
+# รูปอาหารตัวอย่างสำหรับทดสอบ ดาวน์โหลดจาก TheMealDB ไม่ต้อง commit
+tools/sample-photos/
+mock/
+dist/
+
+# ของใช้ระหว่างพัฒนา ไม่ต้องส่งขึ้น repo
+.claude/
+/*.jpg
+/*.jpeg

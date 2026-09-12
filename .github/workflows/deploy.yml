@@ -1,0 +1,67 @@
+name: Deploy
+
+# host เว็บที่ GitHub Pages (ฟรี ใช้โดเมนของร้านได้)
+# ส่วน Firestore rules/indexes ยัง deploy ขึ้น Firebase เพราะฐานข้อมูลอยู่ที่นั่น
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  # ---------------- เว็บ ----------------
+  pages:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # .nojekyll กัน GitHub มองข้ามไฟล์/โฟลเดอร์ที่ขึ้นต้นด้วย _
+      - run: touch public/.nojekyll
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  # ---------------- กฎความปลอดภัยของฐานข้อมูล ----------------
+  # ต้องตั้ง secret 2 ตัวใน GitHub > Settings > Secrets and variables > Actions
+  #   FIREBASE_PROJECT_ID       = project id ของ Firebase
+  #   FIREBASE_SERVICE_ACCOUNT  = เนื้อไฟล์ JSON ของ service account (ทั้งไฟล์)
+  # สร้าง service account: Firebase Console > Project settings > Service accounts > Generate new private key
+  # ยังไม่ได้ตั้ง secret = ข้ามทั้ง job ไม่ให้ build ขึ้นกากบาทแดง
+  rules:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: env.PROJECT_ID != ''
+        with:
+          node-version: 20
+      - run: npm install -g firebase-tools
+        if: env.PROJECT_ID != ''
+      - name: Deploy firestore rules + indexes
+        if: env.PROJECT_ID != ''
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/sa.json
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > sa.json
+          firebase deploy \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
+            --only firestore:rules,firestore:indexes \
+            --non-interactive
+          rm -f sa.json
