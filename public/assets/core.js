@@ -183,8 +183,13 @@ export function friendlyError(e) {
   if (c.includes("permission-denied")) return "ไม่มีสิทธิ์ทำรายการนี้";
   if (c.includes("unavailable") || c.includes("network")) return "เน็ตหลุด ลองใหม่อีกครั้ง";
   if (c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found"))
-    return "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+    return "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
   if (c.includes("too-many-requests")) return "ลองผิดหลายครั้งเกินไป รอสักครู่แล้วลองใหม่";
+  // เจอตอนยังไม่ได้ใส่ค่า Firebase ลง config.js หรือใส่ผิด — ไม่ใช่ความผิดคนหน้าร้าน
+  if (c.includes("api-key") || c.includes("invalid-api-key") || c.includes("configuration-not-found"))
+    return "ระบบยังไม่ได้เชื่อมต่อฐานข้อมูล แจ้งผู้ดูแลให้ตั้งค่า Firebase ก่อน";
+  if (c.includes("unauthorized-domain"))
+    return "โดเมนนี้ยังไม่ได้รับอนุญาต แจ้งผู้ดูแลให้เพิ่มใน Firebase > Authorized domains";
   return e?.message || "เกิดข้อผิดพลาด";
 }
 
