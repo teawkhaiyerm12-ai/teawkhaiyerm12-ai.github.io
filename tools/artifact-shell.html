@@ -44,6 +44,9 @@ select.nb{padding:6px 10px}
     <span class="lbl">หน้า</span>
     <div class="grp" id="nav"></div>
     <div class="sep"></div>
+    <span class="lbl">เข้าในฐานะ</span>
+    <div class="grp" id="roles"></div>
+    <div class="sep"></div>
     <span class="lbl">โต๊ะ</span>
     <select class="nb" id="tablePick"></select>
     <div class="sep"></div>
@@ -56,11 +59,11 @@ select.nb{padding:6px 10px}
   <div class="stage"><iframe id="frame" title="หน้าจอระบบ"></iframe></div>
 
   <div class="acct">
-    <div><b>ผู้จัดการ</b><br><span>manager@demo.local / 123456</span><br>เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน</div>
-    <div><b>พนักงานหน้าร้าน</b><br><span>staff@demo.local / 123456</span><br>เห็นเฉพาะออเดอร์ + ยอดวันนี้</div>
+    <div><b>เจ้าของร้าน</b><br><span>admin12 / admin12</span><br>เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน</div>
+    <div><b>พนักงานหน้าร้าน</b><br><span>user12 / user12</span><br>เห็นเฉพาะออเดอร์ + ยอดวันนี้</div>
   </div>
   <p class="hint">
-    หน้าล็อกอินมีปุ่มกรอกบัญชีให้อัตโนมัติ · ข้อมูลเก็บใน <code>localStorage</code> ของเบราว์เซอร์คุณเท่านั้น
+    ไม่ต้องล็อกอิน กดสลับบทบาทที่ปุ่ม "เข้าในฐานะ" ได้เลย · ข้อมูลเก็บใน <code>localStorage</code> ของเบราว์เซอร์คุณเท่านั้น
     ไม่ได้ต่อ Firebase · กดรีเซ็ตเพื่อเริ่มใหม่<br>
     ระบบจริงบังคับสิทธิ์ด้วย <code>firestore.rules</code> ฝั่ง server — ในเดโมนี้จำลองเฉพาะการซ่อนเมนูตามบทบาท
   </p>
@@ -123,7 +126,7 @@ var frame = document.getElementById("frame");
 function shim() {
   return TAG_OPEN +
     'window.__nav=function(p){parent.postMessage({__nav:p},"*")};' +
-    'window.__ORIGIN__="https://your-shop.web.app";' +
+    'window.__ORIGIN__="https://teawkhaiyerm12-ai.github.io";' +
     'window.__TOKEN__=' + JSON.stringify(token || "") + ';' +
     'document.addEventListener("click",function(e){' +
       'var a=e.target.closest&&e.target.closest("a[href^=\'/\']");' +
@@ -134,8 +137,8 @@ function shim() {
 }
 
 var ACCOUNTS = [
-  { r: "ผู้จัดการ", e: "manager@demo.local", p: "123456", n: "เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน" },
-  { r: "พนักงานหน้าร้าน", e: "staff@demo.local", p: "123456", n: "เห็นเฉพาะออเดอร์ + ยอดวันนี้" }
+  { r: "เจ้าของร้าน", e: "admin12", p: "admin12", n: "เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน" },
+  { r: "พนักงานหน้าร้าน", e: "user12", p: "user12", n: "เห็นเฉพาะออเดอร์ + ยอดวันนี้" }
 ];
 
 function loginHelper() {
@@ -182,7 +185,23 @@ addEventListener("message", function (e) {
   render();
 });
 
+// ponytail: เดโมข้ามหน้าล็อกอิน เขียน user ลง mock ตรง ๆ — ระบบจริงยังต้องล็อกอินผ่าน Firebase
+var ROLES = [["เจ้าของร้าน", "admin12@qrmenu.local", "u_manager"],
+             ["พนักงาน", "user12@qrmenu.local", "u_staff"]];
+var MANAGER_ONLY = { "/admin/menu": 1, "/admin/tables": 1 };
+function whoUid() {
+  try { return (JSON.parse(localStorage.getItem("mock-auth-user") || "null") || {}).uid; }
+  catch (e) { return null; }
+}
+function signInAs(i) {
+  localStorage.setItem("mock-auth-user", JSON.stringify({ uid: ROLES[i][2], email: ROLES[i][1] }));
+}
+
 function paintNav() {
+  var me = whoUid();
+  document.getElementById("roles").innerHTML = ROLES.map(function (r, i) {
+    return '<button class="nb" data-role="' + i + '" aria-pressed="' + (r[2] === me) + '">' + r[0] + "</button>";
+  }).join("");
   document.getElementById("nav").innerHTML = NAV.map(function (n) {
     return '<button class="nb" data-r="' + n[0] + '" aria-pressed="' + (n[0] === route) + '">' + n[1] + "</button>";
   }).join("");
@@ -193,6 +212,13 @@ function paintNav() {
 document.getElementById("nav").onclick = function (e) {
   var b = e.target.closest("[data-r]"); if (!b) return;
   route = b.dataset.r; paintNav(); render();
+};
+document.getElementById("roles").onclick = function (e) {
+  var b = e.target.closest("[data-role]"); if (!b) return;
+  signInAs(+b.dataset.role);
+  if (route === "/t") route = "/admin";
+  else if (b.dataset.role === "1" && MANAGER_ONLY[route]) route = "/admin";
+  paintNav(); render();
 };
 document.getElementById("sizes").onclick = function (e) {
   var b = e.target.closest("[data-w]"); if (!b) return;
@@ -210,9 +236,10 @@ function paintTables() {
 pick.onchange = function () { token = pick.value; if (route === "/t") render(); };
 document.getElementById("reset").onclick = function () {
   if (!confirm("ล้างข้อมูลจำลองทั้งหมดแล้วเริ่มใหม่?")) return;
-  seed(true); token = null; paintTables(); render();
+  seed(true); signInAs(0); token = null; paintTables(); paintNav(); render();
 };
 
+if (!whoUid()) signInAs(0);
 paintTables();
 paintNav();
 render();

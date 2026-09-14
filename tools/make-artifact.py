@@ -55,8 +55,8 @@ MOCK_APP = 'function initializeApp(c){return{name:"[MOCK]",options:c}}'
 
 MOCK_AUTH = r"""
 var AKEY = "mock-auth-user";
-var USERS = { "manager@demo.local": { uid: "u_manager", pw: "123456" },
-              "staff@demo.local":   { uid: "u_staff",   pw: "123456" } };
+var USERS = { "admin12@qrmenu.local": { uid: "u_manager", pw: "admin12" },
+              "user12@qrmenu.local":  { uid: "u_staff",   pw: "user12" } };
 var ALIST = new Set();
 function authRead(){ try { return JSON.parse(localStorage.getItem(AKEY) || "null"); } catch (e) { return null; } }
 function authEmit(){ var u = authRead(); ALIST.forEach(function (f) { f(u); }); }
@@ -266,6 +266,16 @@ def build():
     with open(OUT, "w", encoding="utf-8", newline="") as f:
         f.write(html)
     print("เขียน %s  (%.2f MB)" % (OUT, os.path.getsize(OUT) / 1024 / 1024))
+
+    # สำเนาขึ้น GitHub Pages ที่ /demo/ — shell ไม่มี doctype (artifact ใส่ให้) ต้องเติมเอง ไม่งั้นเป็น quirks mode
+    HEAD = ('<!doctype html>\n<html lang="th">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+            '<meta name="robots" content="noindex">\n')
+    pub = os.path.join(ROOT, "public", "demo", "index.html")
+    os.makedirs(os.path.dirname(pub), exist_ok=True)
+    with open(pub, "w", encoding="utf-8", newline="") as f:
+        f.write(HEAD + html)
+    print("เขียน %s" % pub)
 
 
 if __name__ == "__main__":
