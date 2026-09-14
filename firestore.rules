@@ -58,6 +58,8 @@ service cloud.firestore {
       let m = request.resource.data;
       return m.name is string && m.name.size() > 0 && m.name.size() <= 60
           && m.price is number && m.price >= 0 && m.price <= 20000
+          // ชื่อภาษาพม่า ไม่บังคับ — ใช้บนจอพนักงานเท่านั้น ลูกค้าไม่เห็น
+          && (!('nameMy' in m) || (m.nameMy is string && m.nameMy.size() <= 80))
           // รูปเก็บเป็น data URI — จำกัดขนาดที่ฝั่ง server ด้วย ไม่เชื่อ client อย่างเดียว
           // 60,000 ตัวอักษร ≈ 44 KB เผื่อจาก IMAGE_MAX_BYTES (40 KB) ไว้เล็กน้อย
           && (!('img' in m) || m.img == null

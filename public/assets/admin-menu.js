@@ -108,6 +108,8 @@ function init(user, role) {
         </label>
         <div class="names">
           <input class="fld" value="${esc(m.name)}" data-name="${esc(m.id)}" aria-label="ชื่อเมนู" maxlength="60">
+          <input class="fld my" lang="my" value="${esc(m.nameMy || "")}" data-namemy="${esc(m.id)}"
+                 placeholder="ชื่อภาษาพม่า (โชว์บนจอพนักงาน)" aria-label="ชื่อภาษาพม่า" maxlength="80">
           <div class="uid" title="รหัสเมนู (UID) — ใช้อ้างอิงในรายงาน ไม่เปลี่ยนแม้แก้ชื่อหรือราคา">
             UID <code>${esc(m.id)}</code></div>
         </div>
@@ -143,6 +145,7 @@ function init(user, role) {
   mlist.oninput = e => {
     const t = e.target;
     if (t.dataset.name !== undefined) patch(t.dataset.name, { name: t.value.trim().slice(0, 60) || "เมนูใหม่" }, 700);
+    if (t.dataset.namemy !== undefined) patch(t.dataset.namemy, { nameMy: t.value.trim().slice(0, 80) }, 700);
     else if (t.dataset.price !== undefined) patch(t.dataset.price, { price: Math.max(0, Number(t.value) || 0) }, 700);
   };
   mlist.onchange = async e => {

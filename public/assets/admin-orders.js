@@ -156,7 +156,7 @@ function board(user, role) {
         <span class="tt">${hhmm(o.at)}</span>
       </div>
       <ul>${(o.items || []).map((l, i) => `<li>
-        <span class="ln">${esc(l.name)}</span>
+        <span class="ln">${lineName(l)}</span>
         ${open ? `<span class="qed">
             <button data-dec="${o.id}:${i}" aria-label="ลด ${esc(l.name)}">−</button>
             <span class="q">${l.qty}</span>
@@ -193,7 +193,7 @@ function board(user, role) {
         if (inc) items[i].qty++;
         else if (dec) { if (--items[i].qty <= 0) items.splice(i, 1); }
         else {
-          if (!confirm(t("askRemoveLine")(o.items[i].name, o.table))) return;
+          if (!confirm(t("askRemoveLine")(dishName(o.items[i]), o.table))) return;
           items.splice(i, 1);
         }
         const total = items.reduce((a, l) => a + l.price * l.qty, 0);
@@ -219,6 +219,13 @@ function board(user, role) {
     }
   };
 }
+
+// โหมดพม่า: ชื่อพม่าตัวใหญ่ ชื่อไทยตัวเล็กข้างล่าง ไว้อ่านทวนกับลูกค้า
+// บิลเก่าหรือเมนูที่ยังไม่ได้กรอกชื่อพม่า ใช้ชื่อไทยแทน
+const dishName = l => (getLang() === "my" && l.nameMy) || l.name;
+const lineName = l => getLang() === "my" && l.nameMy
+  ? `<span lang="my">${esc(l.nameMy)}</span><small>${esc(l.name)}</small>`
+  : esc(l.name);
 
 // เสียงเตือนสั้น ๆ ด้วย WebAudio จะได้ไม่ต้องโหลดไฟล์เสียง
 let ac = null;

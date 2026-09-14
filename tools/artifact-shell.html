@@ -81,7 +81,7 @@ function rid() {
   return Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12);
 }
 function seed(force) {
-  if (!force && localStorage.getItem("mock-firestore-seeded")) return;
+  if (!force && localStorage.getItem("mock-firestore-seeded") === "2") return;
   ["mock-firestore", "mock-firestore-v", "mock-auth-user", "qr-order-settings"]
     .forEach(function (k) { localStorage.removeItem(k); });
   var db = {};
@@ -91,11 +91,11 @@ function seed(force) {
     db["tables/" + rid()] = { no: no, active: true, createdAt: new Date().toISOString() };
   });
   SEED.menu.forEach(function (m, i) {
-    db["menu/" + rid()] = { name: m.name, price: m.price, cat: m.cat,
+    db["menu/" + rid()] = { name: m.name, nameMy: m.nameMy, price: m.price, cat: m.cat,
                             sort: i * 10, emoji: "🍽️", img: m.img, soldout: false };
   });
   localStorage.setItem("mock-firestore", JSON.stringify(db));
-  localStorage.setItem("mock-firestore-seeded", "1");
+  localStorage.setItem("mock-firestore-seeded", "2");
 }
 seed(false);
 

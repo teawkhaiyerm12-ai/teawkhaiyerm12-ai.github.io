@@ -250,8 +250,8 @@ def build():
         "admin-tables": to_classic(tables),
     }
 
-    seed = {"menu": [{"cat": c, "name": n, "price": p, "img": imgs[i % len(imgs)]}
-                     for i, (c, n, p, _my) in enumerate(MENU_TH)],
+    seed = {"menu": [{"cat": c, "name": n, "nameMy": my, "price": p, "img": imgs[i % len(imgs)]}
+                     for i, (c, n, p, my) in enumerate(MENU_TH)],
             "tables": list(range(1, 9))}
 
     with open(SHELL, encoding="utf-8") as f:

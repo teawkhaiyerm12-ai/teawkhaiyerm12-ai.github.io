@@ -141,7 +141,9 @@ function render(tableNo, menu) {
 
   const lines = () => [...cart.entries()].map(([id, qty]) => {
     const m = menu.find(x => x.id === id);
-    return { menuId: id, name: String(m.name), price: Number(m.price), qty };
+    // nameMy snapshot ลงบิลด้วย จอพนักงานจะได้ไม่ต้องไปอ่าน collection menu (มีรูป กิน egress)
+    return { menuId: id, name: String(m.name), ...(m.nameMy ? { nameMy: String(m.nameMy) } : {}),
+             price: Number(m.price), qty };
   });
   const sum = ls => ls.reduce((a, l) => a + l.price * l.qty, 0);
 

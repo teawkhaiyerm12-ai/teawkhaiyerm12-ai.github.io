@@ -211,6 +211,8 @@ h2.sec{font-size:16px;font-weight:600;margin:30px 0 10px}
 .tile .rm:hover{background:var(--chili)}
 .sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
 .names{display:flex;flex-direction:column;gap:5px;min-width:0}
+.names .fld.my{font-family:"Myanmar Text","Noto Sans Myanmar",Padauk,system-ui,sans-serif;font-size:13.5px;line-height:1.8}
+.ticket .ln small{display:block;font-size:11.5px;color:var(--muted);line-height:1.4}
 .names .uid{font-size:10.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace;
   letter-spacing:.03em;user-select:all;overflow-wrap:anywhere}
 .names .uid code{background:var(--surface-2);border:1px solid var(--line);
