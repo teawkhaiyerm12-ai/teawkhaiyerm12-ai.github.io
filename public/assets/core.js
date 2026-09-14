@@ -335,6 +335,8 @@ const NAV = [
 export function renderAdminChrome(active, user, role = "staff") {
   const host = document.getElementById("chrome");
   if (!host) return;
+  // ตั้งตรงนี้ ไม่ใช่ตอนโหลด core.js — หน้าลูกค้า import ไฟล์เดียวกันและต้องเป็นไทยเสมอ
+  document.documentElement.lang = currentLang;
   const visible = NAV.filter(([, , need]) => need === "staff" || role === "manager");
   host.innerHTML = `
     <div class="bar">

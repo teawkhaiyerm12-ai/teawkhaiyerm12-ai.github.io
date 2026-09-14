@@ -30,6 +30,7 @@ function noAccess(u) {
 
 /* ---------------- login ---------------- */
 function login() {
+  document.documentElement.lang = getLang();
   document.getElementById("chrome").innerHTML = "";
   view.innerHTML = `
     <div class="loginwrap"><form class="loginbox" id="f">
