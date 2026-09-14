@@ -6,12 +6,13 @@
 
 // Firebase Console > Project settings > General > Your apps > Web app > Config
 export const FIREBASE_CONFIG = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID",
+  apiKey: "AIzaSyCJiZr7Nu9HrNzIy9YfVadICh1_0OkRfnY",
+  authDomain: "qr-menu-1234c.firebaseapp.com",
+  projectId: "qr-menu-1234c",
+  storageBucket: "qr-menu-1234c.firebasestorage.app",
+  messagingSenderId: "2987114356",
+  appId: "1:2987114356:web:caa491545a781702753621",
+  // ponytail: measurementId ตัดออก ระบบไม่ได้ใช้ Analytics (ไม่ต้องมี cookie banner)
 };
 
 // Firebase Console > App Check > Apps > reCAPTCHA v3 site key
