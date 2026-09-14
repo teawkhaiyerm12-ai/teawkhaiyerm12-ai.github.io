@@ -133,7 +133,7 @@ function init(user, role) {
     });
   }
 
-  const patchTimers = new Map();
+  const patchTimers = new Map(), myTimers = new Map();
   function patch(id, data, delay = 0) {
     clearTimeout(patchTimers.get(id));
     patchTimers.set(id, setTimeout(async () => {
@@ -145,7 +145,15 @@ function init(user, role) {
   mlist.oninput = e => {
     const t = e.target;
     if (t.dataset.name !== undefined) patch(t.dataset.name, { name: t.value.trim().slice(0, 60) || "เมนูใหม่" }, 700);
-    if (t.dataset.namemy !== undefined) patch(t.dataset.namemy, { nameMy: t.value.trim().slice(0, 80) }, 700);
+    if (t.dataset.namemy !== undefined) {
+      const id = t.dataset.namemy, v = t.value.trim().slice(0, 80);
+      patch(id, { nameMy: v }, 700);
+      // ponytail: ลบเมนูแล้ว key ค้างใน doc นี้ได้ ไม่เป็นไร — ไม่มีบิลไหนอ้าง id นั้นอีก
+      clearTimeout(myTimers.get(id));
+      myTimers.set(id, setTimeout(() =>
+        setDoc(doc(db, "settings", "menuNames"), { [id]: v }, { merge: true })
+          .catch(e => toast(friendlyError(e), "err")), 700));
+    }
     else if (t.dataset.price !== undefined) patch(t.dataset.price, { price: Math.max(0, Number(t.value) || 0) }, 700);
   };
   mlist.onchange = async e => {

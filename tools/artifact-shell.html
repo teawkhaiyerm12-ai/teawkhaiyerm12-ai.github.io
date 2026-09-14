@@ -90,14 +90,33 @@ function seed(force) {
   SEED.tables.forEach(function (no) {
     db["tables/" + rid()] = { no: no, active: true, createdAt: new Date().toISOString() };
   });
+  var names = {};
   SEED.menu.forEach(function (m, i) {
-    db["menu/" + rid()] = { name: m.name, nameMy: m.nameMy, price: m.price, cat: m.cat,
+    var id = rid(); names[id] = m.nameMy;
+    db["menu/" + id] = { name: m.name, nameMy: m.nameMy, price: m.price, cat: m.cat,
                             sort: i * 10, emoji: "🍽️", img: m.img, soldout: false };
   });
+  db["settings/menuNames"] = names;
   localStorage.setItem("mock-firestore", JSON.stringify(db));
   localStorage.setItem("mock-firestore-seeded", "2");
 }
 seed(false);
+
+// ข้อมูลที่เปิดไว้ก่อนมีชื่อพม่า: เติม settings/menuNames จากชื่อไทย ไม่ต้องล้างบิลที่สั่งค้างไว้
+(function backfillNames() {
+  var db = JSON.parse(localStorage.getItem("mock-firestore") || "{}");
+  var byTh = {};
+  SEED.menu.forEach(function (m) { byTh[m.name] = m.nameMy; });
+  var names = db["settings/menuNames"] || {}, changed = false;
+  Object.keys(db).forEach(function (k) {
+    if (k.indexOf("menu/") !== 0) return;
+    var id = k.slice(5), my = byTh[db[k].name];
+    if (my && !names[id]) { names[id] = my; changed = true; }
+  });
+  if (!changed) return;
+  db["settings/menuNames"] = names;
+  localStorage.setItem("mock-firestore", JSON.stringify(db));
+})();
 
 function tables() {
   var db = JSON.parse(localStorage.getItem("mock-firestore") || "{}");

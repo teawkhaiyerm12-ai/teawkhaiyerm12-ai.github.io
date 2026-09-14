@@ -9,6 +9,7 @@ import {
 import { writeStats } from "./stats.js";
 
 const view = document.getElementById("view");
+let myNames = {};          // menuId -> ชื่อพม่า อ่านจาก settings/menuNames
 applyCachedSettings();
 
 const user = await currentUser();
@@ -117,6 +118,12 @@ function board(user, role) {
   const q = query(collection(db, "orders"),
     where("createdAt", ">=", from), where("createdAt", "<", to), orderBy("createdAt", "desc"));
 
+  // ชื่อพม่าอ่านสดจาก doc เดียว — เจ้าของกรอกเพิ่มทีหลัง บิลที่ค้างอยู่ก็เปลี่ยนตามทันที
+  onSnapshot(doc(db, "settings", "menuNames"), s => {
+    myNames = (s.exists() && s.data()) || {};
+    if (getLang() === "my") paint();
+  }, () => {});
+
   onSnapshot(q, snap => {
     orders = snap.docs.map(d => {
       const v = d.data();
@@ -223,9 +230,10 @@ function board(user, role) {
 
 // โหมดพม่า: ชื่อพม่าตัวใหญ่ ชื่อไทยตัวเล็กข้างล่าง ไว้อ่านทวนกับลูกค้า
 // บิลเก่าหรือเมนูที่ยังไม่ได้กรอกชื่อพม่า ใช้ชื่อไทยแทน
-const dishName = l => (getLang() === "my" && l.nameMy) || l.name;
-const lineName = l => getLang() === "my" && l.nameMy
-  ? `<span lang="my">${esc(l.nameMy)}</span><small>${esc(l.name)}</small>`
+const nameMyOf = l => myNames[l.menuId] || l.nameMy || "";
+const dishName = l => (getLang() === "my" && nameMyOf(l)) || l.name;
+const lineName = l => getLang() === "my" && nameMyOf(l)
+  ? `<span lang="my">${esc(nameMyOf(l))}</span><small>${esc(l.name)}</small>`
   : esc(l.name);
 
 // เสียงเตือนสั้น ๆ ด้วย WebAudio จะได้ไม่ต้องโหลดไฟล์เสียง

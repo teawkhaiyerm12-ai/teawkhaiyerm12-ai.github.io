@@ -41,6 +41,13 @@ service cloud.firestore {
       allow get: if true;
       allow write: if isManager();
     }
+    // ชื่อพม่าของทุกเมนูรวมไว้ doc เดียว { <menuId>: "ชื่อพม่า" }
+    // จอพนักงานฟัง doc นี้ doc เดียว ไม่ต้องอ่าน collection menu ที่มีรูป (กิน egress)
+    match /settings/menuNames {
+      allow get: if isTeam();
+      allow write: if isManager() && request.resource.data.size() <= 300;
+    }
+
     match /settings/roles {
       allow get: if isTeam();      // แอปอ่านเพื่อรู้ว่าตัวเองเป็น manager หรือ staff
       allow write: if false;       // แก้ได้จาก Console เท่านั้น
