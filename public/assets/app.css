@@ -310,25 +310,32 @@ h2.sec{font-size:16px;font-weight:600;margin:30px 0 10px}
 .chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
 
 .list{flex:1;padding:6px var(--gut-r) calc(150px + env(safe-area-inset-bottom)) var(--gut);
-  width:100%;margin:0 auto}
+  width:100%;margin:0 auto;
+  /* การ์ด 2 ใบต่อแถวตั้งแต่จอมือถือ — ลูกค้าเห็นรูปใหญ่ กดง่ายกว่าแบบรายการยาว */
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-content:start}
 .sechead{font-family:"Bai Jamjuree",sans-serif;font-weight:600;font-size:14px;color:var(--muted);
-  padding:18px 0 6px;grid-column:1/-1}
-.item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);align-items:center}
-.item .ph{width:64px;height:64px;flex:none;border-radius:8px;background:var(--tile);
-  display:grid;place-items:center;font-size:29px;overflow:hidden}
-.item.pic .ph{width:82px;height:82px}
-.item .ph img{width:100%;height:100%;object-fit:cover}
-.item .info{flex:1;min-width:0}
-.item .nm{font-weight:600;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
-.item .pr{color:var(--accent-ink);font-weight:600;font-size:14.5px;font-variant-numeric:tabular-nums}
-.item .so{font-size:12px;color:var(--chili)}
+  padding:18px 0 2px;grid-column:1/-1}
+.item{position:relative;display:flex;flex-direction:column;gap:8px;padding:0 0 10px;
+  border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.item .ph{width:100%;aspect-ratio:1/1;border-radius:0;background:var(--tile);
+  display:grid;place-items:center;font-size:40px;overflow:hidden}
+.item .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.item .info{padding:0 10px;min-width:0}
+.item .nm{font-weight:600;font-size:14.5px;line-height:1.5;overflow-wrap:anywhere}
+.item .pr{color:var(--accent-ink);font-weight:600;font-size:14.5px;font-variant-numeric:tabular-nums;
+  margin-top:2px}
+.item .so{font-size:12px;color:var(--chili);margin-top:2px}
 .item.off{opacity:.45}
-.stepper{flex:none;display:flex;align-items:center;gap:4px}
-.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);
-  display:grid;place-items:center;font-size:19px;line-height:1;color:var(--accent-ink);background:var(--surface)}
-.stepper .q{min-width:24px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
-.add{width:40px;height:40px;border-radius:10px;background:var(--accent);color:var(--on-accent);
-  display:grid;place-items:center;font-size:20px;line-height:1;flex:none}
+/* ปุ่มบวก/ตัวนับ ลอยมุมขวาล่างของการ์ด นิ้วโป้งเอื้อมถึงง่าย */
+.stepper,.item .add{position:absolute;right:8px;bottom:8px}
+.stepper{display:flex;align-items:center;gap:2px;background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;padding:2px}
+.stepper button{width:32px;height:32px;border-radius:8px;
+  display:grid;place-items:center;font-size:18px;line-height:1;color:var(--accent-ink);background:transparent}
+.stepper .q{min-width:20px;text-align:center;font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+.add{width:38px;height:38px;border-radius:10px;background:var(--accent);color:var(--on-accent);
+  display:grid;place-items:center;font-size:20px;line-height:1;flex:none;
+  box-shadow:0 2px 8px rgba(0,0,0,.18)}
 
 .cartbar{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--surface);
   border-top:1px solid var(--line);
@@ -344,17 +351,14 @@ h2.sec{font-size:16px;font-weight:600;margin:30px 0 10px}
 
 /* ---- มือถือแนวนอน + tablet แนวตั้ง: 2 คอลัมน์ ---- */
 @media (min-width:600px){
-  .list{max-width:860px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
-    column-gap:26px;align-content:start}
+  .list{max-width:860px;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
   .cust-head>*{max-width:860px;margin-inline:auto;width:100%}
   .cartbar .inner{max-width:860px}
-  .item{padding:13px 0}
-  .item.pic .ph{width:92px;height:92px}
-  .item .nm{font-size:16px}
+  .item .nm{font-size:15.5px}
 }
 /* ---- tablet แนวนอนขึ้นไป: 3 คอลัมน์ ---- */
 @media (min-width:1024px){
-  .list{max-width:1180px;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:30px}
+  .list{max-width:1180px;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
   .cust-head>*{max-width:1180px}
   .cartbar .inner{max-width:1180px;display:flex;align-items:center;gap:22px}
   .cartbar .sumline{margin:0;flex:1;gap:18px}
