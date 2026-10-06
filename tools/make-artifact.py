@@ -55,8 +55,8 @@ MOCK_APP = 'function initializeApp(c){return{name:"[MOCK]",options:c}}'
 
 MOCK_AUTH = r"""
 var AKEY = "mock-auth-user";
-var USERS = { "admin12@qrmenu.local": { uid: "u_manager", pw: "admin12" },
-              "user12@qrmenu.local":  { uid: "u_staff",   pw: "user12" } };
+var USERS = { "owner@qrmenu.local": { uid: "u_manager", pw: "password1234" },
+              "staff@qrmenu.local": { uid: "u_staff",   pw: "123456" } };
 var ALIST = new Set();
 function authRead(){ try { return JSON.parse(localStorage.getItem(AKEY) || "null"); } catch (e) { return null; } }
 function authEmit(){ var u = authRead(); ALIST.forEach(function (f) { f(u); }); }

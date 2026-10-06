@@ -37,7 +37,9 @@ export const IMAGE_MAX_PX = 240;
 export const IMAGE_QUALITY = 0.55;
 export const IMAGE_MAX_BYTES = 40 * 1024;
 
-// พนักงานพิมพ์แค่ชื่อผู้ใช้ (เช่น admin12) ระบบเติมโดเมนนี้ให้เอง
-// Firebase Auth รับเฉพาะ email format แต่ไม่ได้ส่งเมลยืนยัน โดเมนปลอมจึงใช้ได้
-// ผลข้างเคียง: กด "ลืมรหัสผ่าน" ทางอีเมลไม่ได้ ต้องรีเซ็ตที่ Firebase Console
+// หน้าล็อกอินมีช่องรหัสผ่านช่องเดียว — ระบบลองรหัสกับบัญชีเหล่านี้ตามลำดับ
+// รหัสตรงบัญชีไหน = เข้าเป็นบัญชีนั้น (สิทธิ์จริงตัดสินที่ settings/roles + firestore.rules)
+// อีเมลไม่ใช่ความลับ และโดเมนไม่ใช่เมลจริง: ลืมรหัสต้องรีเซ็ตที่ Firebase Console
+// ponytail: ลองทีละบัญชี = รหัสผิด 1 ครั้งนับเป็น 2 ครั้งใน rate limit ของ Firebase — 2 บัญชียังไม่เป็นปัญหา
 export const LOGIN_DOMAIN = "qrmenu.local";
+export const LOGIN_ACCOUNTS = [`owner@${LOGIN_DOMAIN}`, `staff@${LOGIN_DOMAIN}`];

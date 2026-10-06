@@ -59,8 +59,8 @@ select.nb{padding:6px 10px}
   <div class="stage"><iframe id="frame" title="หน้าจอระบบ"></iframe></div>
 
   <div class="acct">
-    <div><b>เจ้าของร้าน</b><br><span>admin12 / admin12</span><br>เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน</div>
-    <div><b>พนักงานหน้าร้าน</b><br><span>user12 / user12</span><br>เห็นเฉพาะออเดอร์ + ยอดวันนี้</div>
+    <div><b>เจ้าของร้าน</b><br>รหัส <span>password1234</span><br>เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน</div>
+    <div><b>พนักงานหน้าร้าน</b><br>รหัส <span>123456</span><br>เห็นเฉพาะออเดอร์ + ยอดวันนี้</div>
   </div>
   <p class="hint">
     ไม่ต้องล็อกอิน กดสลับบทบาทที่ปุ่ม "เข้าในฐานะ" ได้เลย · ข้อมูลเก็บใน <code>localStorage</code> ของเบราว์เซอร์คุณเท่านั้น
@@ -156,8 +156,8 @@ function shim() {
 }
 
 var ACCOUNTS = [
-  { r: "เจ้าของร้าน", e: "admin12", p: "admin12", n: "เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน" },
-  { r: "พนักงานหน้าร้าน", e: "user12", p: "user12", n: "เห็นเฉพาะออเดอร์ + ยอดวันนี้" }
+  { r: "เจ้าของร้าน", p: "password1234", n: "เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน" },
+  { r: "พนักงานหน้าร้าน", p: "123456", n: "เห็นเฉพาะออเดอร์ + ยอดวันนี้" }
 ];
 
 function loginHelper() {
@@ -170,11 +170,11 @@ function loginHelper() {
     'for(var i=0;i<A.length;i++){var a=A[i];' +
     'h+="<button type=\'button\' data-i=\'"+i+"\' style=\'width:100%;text-align:left;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:9px 12px;margin-bottom:7px;line-height:1.55\'>"' +
     '+"<b style=\'font-size:13.5px\'>"+a.r+"</b><br>"' +
-    '+"<span style=\'font-family:ui-monospace,monospace;font-size:12px;color:var(--accent-ink)\'>"+a.e+" / "+a.p+"</span><br>"' +
+    '+"<span style=\'font-family:ui-monospace,monospace;font-size:12px;color:var(--accent-ink)\'>รหัส "+a.p+"</span><br>"' +
     '+"<span style=\'font-size:11.5px;color:var(--muted)\'>"+a.n+"</span></button>";}' +
     'd.innerHTML=h;f.appendChild(d);' +
     'd.addEventListener("click",function(e){var b=e.target.closest("[data-i]");if(!b)return;' +
-    'var a=A[+b.dataset.i];document.getElementById("em").value=a.e;document.getElementById("pw").value=a.p;});' +
+    'var a=A[+b.dataset.i];document.getElementById("pw").value=a.p;});' +
     "},120)})();" + TAG_CLOSE;
 }
 
@@ -205,8 +205,8 @@ addEventListener("message", function (e) {
 });
 
 // ponytail: เดโมข้ามหน้าล็อกอิน เขียน user ลง mock ตรง ๆ — ระบบจริงยังต้องล็อกอินผ่าน Firebase
-var ROLES = [["เจ้าของร้าน", "admin12@qrmenu.local", "u_manager"],
-             ["พนักงาน", "user12@qrmenu.local", "u_staff"]];
+var ROLES = [["เจ้าของร้าน", "owner@qrmenu.local", "u_manager"],
+             ["พนักงาน", "staff@qrmenu.local", "u_staff"]];
 var MANAGER_ONLY = { "/admin/menu": 1, "/admin/tables": 1 };
 function whoUid() {
   try { return (JSON.parse(localStorage.getItem("mock-auth-user") || "null") || {}).uid; }

@@ -3,7 +3,7 @@ import {
   auth, db, collection, doc, query, where, orderBy, onSnapshot, updateDoc, deleteDoc,
   signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence,
   currentUser, loadRole, renderAdminChrome, loadSettings, applyCachedSettings,
-  t, setLang, getLang, LANGS, toEmail, userLabel,
+  t, setLang, getLang, LANGS, LOGIN_ACCOUNTS, userLabel,
   baht, esc, hhmm, dayKey, dayRange, toast, friendlyError,
 } from "./core.js";
 import { writeStats } from "./stats.js";
@@ -30,6 +30,19 @@ function noAccess(u) {
 }
 
 /* ---------------- login ---------------- */
+/** ช่องรหัสผ่านช่องเดียว: ลองกับทุกบัญชีจนกว่าจะตรง ผิดหมด = โยน error ของบัญชีสุดท้าย */
+async function signInByPassword(password) {
+  let last;
+  for (const email of LOGIN_ACCOUNTS) {
+    try { return await signInWithEmailAndPassword(auth, email, password); }
+    catch (e) {
+      last = e;
+      // ผิดเพราะรหัสไม่ตรง → ลองบัญชีถัดไป / ผิดเพราะอย่างอื่น (เน็ต, โดนล็อก) → หยุดเลย
+      if (!/invalid-credential|wrong-password|user-not-found|invalid-login/.test(e?.code || "")) throw e;
+    }
+  }
+  throw last;
+}
 function login() {
   document.documentElement.lang = getLang();
   document.getElementById("chrome").innerHTML = "";
@@ -40,11 +53,8 @@ function login() {
       <div class="langsw login" role="group" aria-label="ภาษา">
         ${LANGS.map(l => `<button type="button" data-lang="${l.id}" aria-pressed="${l.id === getLang()}">${esc(l.label)}</button>`).join("")}
       </div>
-      <label for="em">${esc(t("email"))}</label>
-      <input class="fld" id="em" type="text" inputmode="email" autocapitalize="none"
-             autocomplete="username" spellcheck="false" required>
       <label for="pw">${esc(t("password"))}</label>
-      <input class="fld" id="pw" type="password" autocomplete="current-password" required>
+      <input class="fld" id="pw" type="password" autocomplete="current-password" required autofocus>
       <button class="btn" type="submit">${esc(t("signin"))}</button>
       <div class="err" id="er"></div>
     </form></div>`;
@@ -56,14 +66,14 @@ function login() {
   };
 
   const f = document.getElementById("f"), er = document.getElementById("er");
-  const em = document.getElementById("em"), pw = document.getElementById("pw");
+  const pw = document.getElementById("pw");
   f.onsubmit = async e => {
     e.preventDefault();
     const btn = f.querySelector("button");
     btn.disabled = true; er.textContent = "";
     try {
       await setPersistence(auth, browserLocalPersistence);
-      const cred = await signInWithEmailAndPassword(auth, toEmail(em.value), pw.value);
+      const cred = await signInByPassword(pw.value);
       const next = new URLSearchParams(location.search).get("next");
       if (next && next.startsWith("/admin")) return location.replace(next);
       const role = await loadRole(cred.user);

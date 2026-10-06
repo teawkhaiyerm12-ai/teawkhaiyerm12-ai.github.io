@@ -15,7 +15,7 @@ import {
 
 import {
   FIREBASE_CONFIG, RECAPTCHA_SITE_KEY, USE_EMULATOR,
-  IMAGE_MAX_PX, IMAGE_QUALITY, IMAGE_MAX_BYTES, LOGIN_DOMAIN,
+  IMAGE_MAX_PX, IMAGE_QUALITY, IMAGE_MAX_BYTES, LOGIN_DOMAIN, LOGIN_ACCOUNTS,
 } from "./config.js";
 
 export const app = initializeApp(FIREBASE_CONFIG);
@@ -78,7 +78,7 @@ const STRINGS = {
     navOrders: "ออเดอร์", navMenu: "จัดการเมนู", navReport: "ยอดขาย", navTables: "โต๊ะ & QR",
     roleManager: "ผู้จัดการ", roleStaff: "พนักงานหน้าร้าน",
 
-    loginSub: "เข้าได้เฉพาะบัญชีที่ทางร้านสร้างไว้",
+    loginSub: "ใส่รหัสผ่านของเจ้าของร้านหรือพนักงาน",
     email: "ชื่อผู้ใช้", password: "รหัสผ่าน", signin: "เข้าสู่ระบบ",
     noAccessTitle: "บัญชีนี้ยังไม่มีสิทธิ์เข้าระบบ",
     noAccessText: "แจ้งผู้จัดการร้านให้เพิ่มบัญชีนี้เข้าระบบก่อน",
@@ -109,7 +109,7 @@ const STRINGS = {
     navOrders: "မှာယူမှုများ", navMenu: "မီနူးစီမံ", navReport: "ရောင်းအား", navTables: "စားပွဲ & QR",
     roleManager: "မန်နေဂျာ", roleStaff: "ဆိုင်ဝန်ထမ်း",
 
-    loginSub: "ဆိုင်မှ ဖွင့်ပေးထားသော အကောင့်ဖြင့်သာ ဝင်နိုင်သည်",
+    loginSub: "ဆိုင်ရှင် သို့မဟုတ် ဝန်ထမ်း စကားဝှက်ကို ထည့်ပါ",
     email: "အသုံးပြုသူအမည်", password: "စကားဝှက်", signin: "ဝင်မည်",
     noAccessTitle: "ဤအကောင့်တွင် ဝင်ခွင့် မရှိသေးပါ",
     noAccessText: "မန်နေဂျာကို ပြောပြီး ဤအကောင့်ကို ထည့်ခိုင်းပါ",
@@ -183,7 +183,7 @@ export function friendlyError(e) {
   if (c.includes("permission-denied")) return "ไม่มีสิทธิ์ทำรายการนี้";
   if (c.includes("unavailable") || c.includes("network")) return "เน็ตหลุด ลองใหม่อีกครั้ง";
   if (c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found"))
-    return "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
+    return "รหัสผ่านไม่ถูกต้อง";
   if (c.includes("too-many-requests")) return "ลองผิดหลายครั้งเกินไป รอสักครู่แล้วลองใหม่";
   // เจอตอนยังไม่ได้ใส่ค่า Firebase ลง config.js หรือใส่ผิด — ไม่ใช่ความผิดคนหน้าร้าน
   if (c.includes("api-key") || c.includes("invalid-api-key") || c.includes("configuration-not-found"))
@@ -262,11 +262,7 @@ export function shrinkImage(file) {
   });
 }
 
-/** พนักงานพิมพ์ "admin12" ระบบเติมเป็น "admin12@qrmenu.local" ให้ Firebase */
-export const toEmail = v => {
-  const s = String(v || "").trim().toLowerCase();
-  return s.includes("@") ? s : `${s}@${LOGIN_DOMAIN}`;
-};
+export { LOGIN_ACCOUNTS };
 /** ตัดโดเมนออกตอนโชว์บนหน้าจอ พนักงานจะได้เห็นแค่ชื่อผู้ใช้ */
 export const userLabel = u => String(u?.email || "").replace(`@${LOGIN_DOMAIN}`, "");
 
