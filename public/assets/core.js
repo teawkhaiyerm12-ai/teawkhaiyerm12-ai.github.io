@@ -15,7 +15,7 @@ import {
 
 import {
   FIREBASE_CONFIG, RECAPTCHA_SITE_KEY, USE_EMULATOR,
-  IMAGE_MAX_PX, IMAGE_QUALITY, IMAGE_MAX_BYTES, LOGIN_DOMAIN, LOGIN_ACCOUNTS,
+  IMAGE_MAX_PX, IMAGE_QUALITY, IMAGE_MAX_BYTES, LOGIN_DOMAIN, LOGIN_ACCOUNTS, ROLE_UIDS,
 } from "./config.js";
 
 export const app = initializeApp(FIREBASE_CONFIG);
@@ -284,9 +284,15 @@ export const roleLabel = r => t(r === "manager" ? "roleManager" : "roleStaff");
 export async function loadRole(user) {
   if (!user) return null;
   try {
-    const snap = await withTimeout(getDoc(doc(db, "settings", "roles")), 10000);
-    if (!snap.exists()) return null;
-    const d = snap.data() || {};
+    const ref = doc(db, "settings", "roles");
+    const snap = await withTimeout(getDoc(ref), 10000);
+    let d = snap.exists() ? snap.data() || {} : null;
+    // ระบบใหม่ยังไม่มี doc roles: เจ้าของล็อกอินครั้งแรก = สร้างให้เลย (rules ยอมเฉพาะ uid เจ้าของ)
+    if (!d && ROLE_UIDS.managers.includes(user.uid)) {
+      await withTimeout(setDoc(ref, ROLE_UIDS), 10000);
+      d = ROLE_UIDS;
+    }
+    if (!d) return null;
     if ((d.managers || []).includes(user.uid)) return "manager";
     if ((d.staff || []).includes(user.uid)) return "staff";
   } catch (_) { /* อ่านไม่ได้ = ไม่มีสิทธิ์ ปล่อยให้ rules เป็นคนตัดสินอยู่ดี */ }

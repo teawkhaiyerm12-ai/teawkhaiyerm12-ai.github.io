@@ -43,3 +43,11 @@ export const IMAGE_MAX_BYTES = 40 * 1024;
 // ponytail: ลองทีละบัญชี = รหัสผิด 1 ครั้งนับเป็น 2 ครั้งใน rate limit ของ Firebase — 2 บัญชียังไม่เป็นปัญหา
 export const LOGIN_DOMAIN = "qrmenu.local";
 export const LOGIN_ACCOUNTS = [`owner@${LOGIN_DOMAIN}`, `staff@${LOGIN_DOMAIN}`];
+
+// UID ของ 2 บัญชีข้างบน (Firebase Console > Authentication > Users > User UID)
+// เจ้าของล็อกอินครั้งแรก ระบบเขียนค่านี้ลง settings/roles ให้เอง ไม่ต้องไปกรอกใน Console
+// uid ไม่ใช่ความลับ — คนอื่นรู้ก็ล็อกอินแทนไม่ได้ ต้องมีรหัสผ่าน
+export const ROLE_UIDS = {
+  managers: ["AngZmdRrfngD3TeklPAwdRhRGmr2"],  // owner@qrmenu.local
+  staff:    ["ISgrkRMfycesPs0DTqVgJsp91cd2"],  // staff@qrmenu.local
+};

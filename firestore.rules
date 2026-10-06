@@ -9,11 +9,12 @@ service cloud.firestore {
     //    staff   — พนักงานหน้าร้าน: เห็นเฉพาะออเดอร์วันนี้ กดเสิร์ฟ แก้บิล
     //
     //  รายชื่อ uid อยู่ใน doc  settings/roles = { managers: [...], staff: [...] }
-    //  แก้จาก Firebase Console เท่านั้น ไม่มีใครเขียนได้จากในแอป (กัน privilege escalation)
-    //  เพิ่ม/ลดพนักงาน = แก้ doc ไม่ต้อง deploy rules ใหม่
+    //  doc นี้สร้างเองตอนเจ้าของล็อกอินครั้งแรก (ROLE_UIDS ใน public/assets/config.js)
+    //  หลังจากนั้นแก้ได้จาก Firebase Console เท่านั้น — staff เขียนไม่ได้เลย (กัน privilege escalation)
+    //  doc พัง: ลบทิ้งใน Console แล้วให้เจ้าของล็อกอินใหม่ ระบบสร้างให้อีกรอบ
     //
-    //  OWNER_UID ข้างล่างเป็นกุญแจสำรอง เผื่อ doc roles หายหรือพัง จะได้ไม่ล็อกตัวเองออก
-    //  ใส่ uid เจ้าของร้านไว้ทั้งใน rules นี้ และใน settings/roles.managers
+    //  uid ใน isOwner() เป็นกุญแจสำรอง เผื่อ doc roles หายหรือพัง จะได้ไม่ล็อกตัวเองออก
+    //  บัญชี owner@qrmenu.local
     // ============================================================
 
     function rolesPath() {
@@ -23,7 +24,7 @@ service cloud.firestore {
       return exists(rolesPath()) ? get(rolesPath()).data.get(key, []) : [];
     }
     function isOwner() {
-      return request.auth != null && request.auth.uid == 'PASTE_UID_OWNER';
+      return request.auth != null && request.auth.uid == 'AngZmdRrfngD3TeklPAwdRhRGmr2';
     }
     function isManager() {
       return isOwner() || (request.auth != null && request.auth.uid in roleList('managers'));
@@ -49,8 +50,9 @@ service cloud.firestore {
     }
 
     match /settings/roles {
-      allow get: if isTeam();      // แอปอ่านเพื่อรู้ว่าตัวเองเป็น manager หรือ staff
-      allow write: if false;       // แก้ได้จาก Console เท่านั้น
+      allow get: if isTeam() || isOwner();   // แอปอ่านเพื่อรู้ว่าตัวเองเป็น manager หรือ staff
+      allow create: if isOwner();            // ครั้งแรกเท่านั้น — แอปของเจ้าของสร้างให้
+      allow update, delete: if false;        // หลังจากนั้นแก้ได้จาก Console เท่านั้น
     }
 
     // ---------- เมนู ----------
