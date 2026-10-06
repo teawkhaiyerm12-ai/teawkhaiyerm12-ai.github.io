@@ -200,28 +200,27 @@ function init(user, role) {
   };
 }
 
-/* เมนูตั้งต้นสำหรับร้านเปิดใหม่ — ตั้งใจให้แก้ทับ ไม่ใช่ใช้จริงทั้งชุด */
-const SAMPLE = [
-  ["แนะนำ", "ข้าวกะเพราหมูสับไข่ดาว", 65, "🍳"],
-  ["แนะนำ", "ต้มยำกุ้งน้ำข้น", 150, "🦐"],
-  ["แนะนำ", "ผัดไทยกุ้งสด", 90, "🍜"],
-  ["ข้าว", "ข้าวผัดกุ้ง", 80, "🍤"],
-  ["ข้าว", "ข้าวหมูกรอบ", 70, "🥓"],
-  ["ข้าว", "ข้าวมันไก่", 60, "🍗"],
-  ["ข้าว", "ข้าวเปล่า", 15, "🍚"],
-  ["เส้น", "ก๋วยเตี๋ยวต้มยำหมู", 60, "🍲"],
-  ["เส้น", "ราดหน้าหมูหมัก", 65, "🍛"],
-  ["ทานเล่น", "ปีกไก่ทอดน้ำปลา", 90, "🍗"],
-  ["ทานเล่น", "ไข่เจียวหมูสับ", 45, "🍳"],
-  ["เครื่องดื่ม", "ชาเย็น", 35, "🧋"],
-  ["เครื่องดื่ม", "น้ำมะนาวโซดา", 45, "🍋"],
-  ["เครื่องดื่ม", "น้ำเปล่า", 15, "💧"],
-];
+/* เมนูตัวอย่าง 20 รายการพร้อมรูปและชื่อพม่า (public/sample/ — สร้างโดย tools/make-artifact.py)
+   ตั้งใจให้ลองระบบแล้วแก้ทับหรือลบทิ้ง ไม่ใช่ใช้จริงทั้งชุด */
+const toDataUri = blob => new Promise((ok, bad) => {
+  const r = new FileReader();
+  r.onload = () => ok(r.result); r.onerror = bad; r.readAsDataURL(blob);
+});
 
 async function seedMenu(startSort) {
+  // baseURI ไม่ใช่ location — เดโมรันใน iframe srcdoc ที่ location เป็น about:srcdoc
+  const base = new URL("../sample/", document.baseURI);
+  const list = await (await fetch(new URL("menu.json", base))).json();
+  const names = {};
   let sort = startSort;
-  for (const [cat, name, price, emoji] of SAMPLE) {
-    await addDoc(collection(db, "menu"), { name, price, cat, emoji, img: null, soldout: false, sort });
+  for (const m of list) {
+    const img = await toDataUri(await (await fetch(new URL(m.img, base))).blob());
+    const ref = await addDoc(collection(db, "menu"), {
+      name: m.name, nameMy: m.nameMy, price: m.price, cat: m.cat,
+      emoji: "🍽️", img, soldout: false, sort,
+    });
+    names[ref.id] = m.nameMy;
     sort += 10;
   }
+  await setDoc(doc(db, "settings", "menuNames"), names, { merge: true });
 }

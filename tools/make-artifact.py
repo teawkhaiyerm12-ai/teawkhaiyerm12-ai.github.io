@@ -201,7 +201,7 @@ def build():
     quality = float(re.search(r"IMAGE_QUALITY\s*=\s*([\d.]+)", cfg).group(1))
 
     files = sorted(f for f in os.listdir(PHOTOS) if f.endswith(".jpg"))[:20]
-    imgs, total = [], 0
+    imgs, raws, total = [], [], 0
     for fn in files:
         im = Image.open(os.path.join(PHOTOS, fn)).convert("RGB")
         s = min(1, max_px / max(im.size))
@@ -211,6 +211,7 @@ def build():
         raw = buf.getvalue()
         total += len(raw)
         imgs.append("data:image/webp;base64," + base64.b64encode(raw).decode())
+        raws.append(raw)
     print("รูป %d ใบ  รวม %.0f KB  เฉลี่ย %.1f KB" % (len(imgs), total / 1024, total / len(imgs) / 1024))
 
     core = sub(read("core.js"), [
@@ -248,7 +249,21 @@ def build():
         "admin-menu": to_classic(read("admin-menu.js")),
         "admin-report": to_classic(read("admin-report.js")),
         "admin-tables": to_classic(tables),
+        "selftest": open(os.path.join(ROOT, "tools", "demo-selftest.js"), encoding="utf-8").read(),
     }
+
+    # เมนูตัวอย่างพร้อมรูปสำหรับปุ่ม "ใส่เมนูตัวอย่าง" ในระบบจริง (public/sample/)
+    sdir = os.path.join(ROOT, "public", "sample")
+    os.makedirs(sdir, exist_ok=True)
+    sample = []
+    for i, (c, n, p, my) in enumerate(MENU_TH):
+        fn = "%02d.webp" % (i + 1)
+        with open(os.path.join(sdir, fn), "wb") as f:
+            f.write(raws[i % len(raws)])
+        sample.append({"cat": c, "name": n, "nameMy": my, "price": p, "img": fn})
+    with open(os.path.join(sdir, "menu.json"), "w", encoding="utf-8", newline="") as f:
+        json.dump(sample, f, ensure_ascii=False, indent=1)
+    print("เขียน public/sample/ (%d เมนู)" % len(sample))
 
     seed = {"menu": [{"cat": c, "name": n, "nameMy": my, "price": p, "img": imgs[i % len(imgs)]}
                      for i, (c, n, p, my) in enumerate(MENU_TH)],

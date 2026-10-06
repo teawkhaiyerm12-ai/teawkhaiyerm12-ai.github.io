@@ -6,7 +6,7 @@ import {
   baht, esc, hhmm, dayKey, monthKey, monthLabel, dayRange, pad2,
   TH_MONTH, TH_DAY, toast, friendlyError, DEFAULT_SHOP,
 } from "./core.js";
-import { summarize } from "./stats.js";
+import { summarize, rankFromStats, dayReportRows, monthReportRows } from "./stats.js";
 import { downloadCsv } from "./csv.js";
 
 const view = document.getElementById("view");
@@ -61,6 +61,12 @@ function init(user, role) {
           — กดปุ่มนี้ปีละครั้งเพื่อล้างบิลเก่าออก ยอดขายย้อนหลังยังอยู่ครบ<br>
           ก่อนล้าง ควรกดดาวน์โหลด Excel ของเดือนที่จะลบเก็บไว้ก่อน
         </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
+          <span style="font-size:13.5px;font-weight:600">บิลรายใบย้อนหลัง</span>
+          <input class="fld" id="logday" type="date" style="max-width:180px">
+          <button class="btn ghost" id="csvday">⭳ ดาวน์โหลดบิลวันนั้น</button>
+          <span class="hint" id="logMsg"></span>
+        </div>
         <button class="btn ghost danger" id="purge">ลบบิลที่เก่ากว่า 1 ปี</button>
         <span class="hint" id="purgeMsg" style="margin-left:10px"></span>
       </div>` : ""}
@@ -120,26 +126,7 @@ function init(user, role) {
 
     document.getElementById("csv").onclick = () => {
       if (!live.length) return toast("วันนี้ยังไม่มีออเดอร์", "err");
-      const bFirst = 5, bLast = 4 + live.length, bTotal = bLast + 1, bCount = bLast + 2;
-      const mHdr = bLast + 4, mFirst = mHdr + 1, mLast = mHdr + rank.length, mTotal = mLast + 1;
-      downloadCsv(`ยอดขาย-${dayKey(new Date())}.csv`, [
-        ["รายงานยอดขายรายวัน", shopName()],
-        ["วันที่", dayKey(new Date())],
-        [],
-        ["เวลา", "โต๊ะ", "สถานะ", "รายการ", "จำนวนชิ้น", "ยอด (บาท)"],
-        ...live.map(o => [
-          hhmm(o.at), o.table, o.status === "done" ? "เสิร์ฟแล้ว" : "รอเสิร์ฟ",
-          (o.items || []).map(l => `${l.name} x${l.qty}`).join(" + "),
-          (o.items || []).reduce((a, l) => a + l.qty, 0), o.total,
-        ]),
-        ["รวมทั้งวัน", "", "", "", `=SUM(E${bFirst}:E${bLast})`, `=SUM(F${bFirst}:F${bLast})`],
-        ["จำนวนบิล", `=COUNT(F${bFirst}:F${bLast})`],
-        ["เฉลี่ยต่อบิล (บาท)", `=F${bTotal}/B${bCount}`],
-        [],
-        ["รหัสเมนู (UID)", "เมนู", "จำนวนที่ขาย", "ยอดเงิน (บาท)", "สัดส่วนยอดขาย (%)"],
-        ...rank.map(([uid, r], i) => [uid, r.name, r.qty, r.amt, `=D${mFirst + i}/$D$${mTotal}*100`]),
-        ["รวม", "", `=SUM(C${mFirst}:C${mLast})`, `=SUM(D${mFirst}:D${mLast})`, `=SUM(E${mFirst}:E${mLast})`],
-      ]);
+      downloadCsv(`ยอดขาย-${dayKey(new Date())}.csv`, dayReportRows(dayKey(new Date()), shopName(), todayOrders));
     };
   }
 
@@ -182,14 +169,7 @@ function init(user, role) {
     const pct = prevSame ? Math.round((total - prevSame) / prevSame * 100) : 0;
     const cls = pct > 1 ? "up" : pct < -1 ? "down" : "flat";
 
-    // รวมตาม menuId ไม่ใช่ชื่อ — เมนูที่เปลี่ยนชื่อกลางเดือนต้องยังเป็นก้อนเดียว
-    const agg = {};
-    for (const r of rows) for (const [uid, v] of Object.entries(r.items || {})) {
-      const a = agg[uid] || (agg[uid] = { name: v.name || uid, qty: 0, amt: 0 });
-      if (v.name) a.name = v.name;
-      a.qty += v.qty; a.amt += v.amt;
-    }
-    const rankAll = Object.entries(agg).sort((a, b) => b[1].amt - a[1].amt);
+    const rankAll = rankFromStats(rows);
     const rank = rankAll.slice(0, 8);
     const rankMax = rank.length ? rank[0][1].amt : 1;
     const today = dayKey(new Date());
@@ -247,27 +227,7 @@ function init(user, role) {
     document.getElementById("mpick").onchange = e => { picked = e.target.value; paintMonth(); };
     document.getElementById("csvm").onclick = () => {
       if (!rows.length) return toast("เดือนนี้ยังไม่มียอดขาย", "err");
-      const dFirst = 5, dLast = 4 + rows.length;
-      const dTotal = dLast + 1;
-      const mHdr = dLast + 5, mFirst = mHdr + 1, mLast = mHdr + rankAll.length, mTotal = mLast + 1;
-      downloadCsv(`ยอดขาย-${picked}.csv`, [
-        ["รายงานยอดขายรายเดือน", shopName()],
-        ["เดือน", monthLabel(picked)],
-        [],
-        ["วันที่", "วัน", "จำนวนบิล", "ยอดขาย (บาท)", "เฉลี่ยต่อบิล (บาท)"],
-        ...rows.map((r, i) => [
-          r.day, TH_DAY[new Date(r.day + "T12:00:00").getDay()], r.bills, r.total,
-          r.bills ? `=D${dFirst + i}/C${dFirst + i}` : "",
-        ]),
-        ["รวมทั้งเดือน", "", `=SUM(C${dFirst}:C${dLast})`, `=SUM(D${dFirst}:D${dLast})`,
-          bills ? `=D${dTotal}/C${dTotal}` : ""],
-        ["เฉลี่ยต่อวัน", "", `=AVERAGE(C${dFirst}:C${dLast})`, `=AVERAGE(D${dFirst}:D${dLast})`],
-        ["ยอดขายสูงสุดในหนึ่งวัน", "", "", `=MAX(D${dFirst}:D${dLast})`],
-        [],
-        ["รหัสเมนู (UID)", "เมนู", "จำนวนที่ขาย", "ยอดเงิน (บาท)", "สัดส่วนยอดขาย (%)"],
-        ...rankAll.map(([uid, r], i) => [uid, r.name, r.qty, r.amt, `=D${mFirst + i}/$D$${mTotal}*100`]),
-        ["รวม", "", `=SUM(C${mFirst}:C${mLast})`, `=SUM(D${mFirst}:D${mLast})`, `=SUM(E${mFirst}:E${mLast})`],
-      ]);
+      downloadCsv(`ยอดขาย-${picked}.csv`, monthReportRows(picked, shopName(), rows));
     };
   }
 
@@ -289,6 +249,32 @@ function init(user, role) {
   };
 
   const thDate = key => `${+key.slice(-2)} ${TH_MONTH[+key.slice(5, 7) - 1]}`;
+
+  /* ---------------- บิลรายใบย้อนหลังรายวัน ----------------
+     ยอดสรุปเก็บถาวร แต่บิลรายใบอยู่แค่ 1 ปี — ปุ่มนี้ไว้เก็บ log ก่อนล้าง
+     อ่านทีละวัน (≤ ~1,000 reads) ไม่ทำรายเดือน: 30 วันพร้อมกันจะกินโควตาอ่านทั้งวัน */
+  const dayIn = document.getElementById("logday");
+  if (dayIn) {
+    const yest = new Date(); yest.setDate(yest.getDate() - 1);
+    dayIn.value = dayKey(yest);
+    dayIn.max = dayKey(new Date());
+    const logMsg = document.getElementById("logMsg");
+    document.getElementById("csvday").onclick = async () => {
+      if (!dayIn.value) return;
+      logMsg.textContent = "กำลังโหลด…";
+      try {
+        const { from, to } = dayRange(new Date(dayIn.value + "T12:00:00"));
+        const snap = await getDocs(query(collection(db, "orders"),
+          where("createdAt", ">=", from), where("createdAt", "<", to), orderBy("createdAt", "asc")));
+        const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (!orders.some(o => (o.status || "new") !== "cancelled")) {
+          logMsg.textContent = "วันนั้นไม่มีบิล"; return;
+        }
+        downloadCsv(`บิล-${dayIn.value}.csv`, dayReportRows(dayIn.value, shopName(), orders));
+        logMsg.textContent = `${orders.length} ใบ`;
+      } catch (e) { logMsg.textContent = friendlyError(e); }
+    };
+  }
 
   /* ---------------- ล้างบิลเก่ากว่า 1 ปี ----------------
      ไม่มี cron และไม่มีคนดูแลระบบต่อ เลยทำเป็นปุ่มให้เจ้าของร้านกดเองปีละครั้ง

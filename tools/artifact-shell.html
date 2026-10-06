@@ -133,10 +133,11 @@ var PAGES = {
   "/admin":        { js: "admin-orders", body: ADMIN_BODY, login: true },
   "/admin/menu":   { js: "admin-menu",   body: ADMIN_BODY },
   "/admin/report": { js: "admin-report", body: ADMIN_BODY },
-  "/admin/tables": { js: "admin-tables", body: ADMIN_BODY, qr: true }
+  "/admin/tables": { js: "admin-tables", body: ADMIN_BODY, qr: true },
+  "/test":         { js: "selftest",     body: '<main id="view"></main>' }
 };
 var NAV = [["/t", "มือถือลูกค้า"], ["/admin", "จอหลังร้าน"], ["/admin/menu", "จัดการเมนู"],
-           ["/admin/report", "ยอดขาย"], ["/admin/tables", "โต๊ะ & QR"]];
+           ["/admin/report", "ยอดขาย"], ["/admin/tables", "โต๊ะ & QR"], ["/test", "🧪 ทดสอบระบบ"]];
 var SIZES = [["มือถือ", 390], ["แท็บเล็ต", 820], ["เต็มจอ", 0]];
 
 var route = "/t", size = 390, token = null;
