@@ -10,7 +10,7 @@ import {
 import {
   getFirestore, connectFirestoreEmulator, collection, doc, getDoc, getDocs,
   setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy,
-  serverTimestamp, writeBatch, Timestamp,
+  serverTimestamp, writeBatch, Timestamp, limit,
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 import {
@@ -36,7 +36,7 @@ if (USE_EMULATOR) {
 
 export {
   collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
-  onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, Timestamp,
+  onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, Timestamp, limit,
   signInWithEmailAndPassword, signOut, onAuthStateChanged,
   setPersistence, browserLocalPersistence, updatePassword,
 };
@@ -97,6 +97,7 @@ const STRINGS = {
     cantRestore: "บิลนี้ไม่เหลือรายการแล้ว เรียกคืนไม่ได้",
     loadFail: "โหลดออเดอร์ไม่ได้",
     newOrder: "ออเดอร์ใหม่",
+    notInMenu: "ไม่มีในเมนู", priceNow: "ราคาเมนูจริง", sumMismatch: "รวมรายการได้",
     changePw: "เปลี่ยนรหัสผ่าน",
     newPw: "รหัสผ่านใหม่",
     pwTooShort: "รหัสผ่านต้องยาวอย่างน้อย 8 ตัว",
@@ -128,6 +129,7 @@ const STRINGS = {
     cantRestore: "ဤဘောက်ချာတွင် ပစ္စည်း မကျန်တော့သဖြင့် ပြန်မယူနိုင်ပါ",
     loadFail: "မှာယူမှုများ ဖတ်၍မရပါ",
     newOrder: "မှာယူမှုအသစ်",
+    notInMenu: "မီနူးတွင် မရှိ", priceNow: "မီနူးဈေးနှုန်း", sumMismatch: "စုစုပေါင်း မှန်ကန်ချက်",
     changePw: "စကားဝှက် ပြောင်းမည်",
     newPw: "စကားဝှက် အသစ်",
     pwTooShort: "စကားဝှက်သည် အနည်းဆုံး ၈ လုံး ရှိရမည်",
@@ -151,6 +153,13 @@ export const t = key => STRINGS[currentLang][key];
 
 /** โหลดหน้าใหม่ — ตัว build ของเดโมจะ patch ให้ยิงไปที่ shell แทน */
 export const reloadPage = () => location.reload();
+
+/** จอหลังร้านเปิดค้างข้ามคืน: query "วันนี้" ถูกตั้งตอนโหลดหน้า เลยต้องโหลดใหม่หลังเที่ยงคืน
+ *  ไม่งั้นเช้าวันใหม่จะไม่เห็นออเดอร์ใหม่ และยอดสรุปจะเขียนบิลเมื่อวานลงวันนี้ */
+export function reloadAtMidnight() {
+  const next = new Date(); next.setHours(24, 0, 5, 0);
+  setTimeout(reloadPage, next - Date.now());
+}
 
 /* ---------------- แปลชื่อเมนูไทย → พม่า อัตโนมัติ ----------------
    ใช้เมื่อเจ้าของยังไม่ได้กรอกชื่อพม่าเอง — จอพนักงานจะได้ไม่ว่าง

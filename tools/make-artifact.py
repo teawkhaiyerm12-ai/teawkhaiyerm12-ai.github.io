@@ -109,10 +109,11 @@ function collection(b){ var seg = [].slice.call(arguments, 1);
   return { __col: true, __path: p, __filters: [], __order: null }; }
 function query(r){ var ops = [].slice.call(arguments, 1);
   var q = Object.assign({}, r, { __filters: (r.__filters || []).slice(), __order: r.__order });
-  ops.forEach(function (o) { if (o.type === "where") q.__filters.push(o); if (o.type === "order") q.__order = o; });
+  ops.forEach(function (o) { if (o.type === "where") q.__filters.push(o); if (o.type === "order") q.__order = o; if (o.type === "limit") q.__limit = o.n; });
   return q; }
 function where(field, op, value){ return { type: "where", field: field, op: op, value: value }; }
 function orderBy(field, dir){ return { type: "order", field: field, dir: dir || "asc" }; }
+function limit(n){ return { type: "limit", n: n }; }
 
 function fsNum(v){ return v instanceof Timestamp ? v.ms : (v && v.__ts != null ? v.__ts : v); }
 function fsCmp(a, b){ var x = fsNum(a), y = fsNum(b); return x < y ? -1 : x > y ? 1 : 0; }
@@ -139,7 +140,7 @@ function fsReadCol(ref){
   } else {
     rows.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
   }
-  return rows;
+  return ref.__limit ? rows.slice(0, ref.__limit) : rows;
 }
 function fsSnap(r){ return { id: r.id, exists: function(){ return true; }, data: function(){ return r.data; },
   metadata: { fromCache: false, hasPendingWrites: false } }; }

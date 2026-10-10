@@ -4,12 +4,13 @@ import {
   signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence,
   currentUser, loadRole, renderAdminChrome, loadSettings, applyCachedSettings,
   t, setLang, getLang, LANGS, LOGIN_ACCOUNTS, userLabel, autoMy,
-  baht, esc, hhmm, dayKey, dayRange, toast, friendlyError,
+  baht, esc, hhmm, dayKey, dayRange, toast, friendlyError, reloadAtMidnight,
 } from "./core.js";
 import { writeStats } from "./stats.js";
 
 const view = document.getElementById("view");
 let myNames = {};          // menuId -> ชื่อพม่า อ่านจาก settings/menuNames
+let menuPrice = null;      // menuId -> ราคาปัจจุบัน (null = ยังโหลดไม่เสร็จ ไม่เตือน)
 applyCachedSettings();
 
 const user = await currentUser();
@@ -124,7 +125,15 @@ function board(user, role) {
     paint();
   };
 
+  reloadAtMidnight();
   const { from, to } = dayRange();
+
+  // ราคาในบิลมาจากมือถือลูกค้า — เทียบกับเมนูจริง ถ้าไม่ตรงให้พนักงานเห็นก่อนเก็บเงิน
+  // ponytail: rules วนลูปเช็คทุกบรรทัดไม่ได้ เลยตรวจที่จอนี้แทน (อ่านเมนูครั้งเดียว + ส่วนที่เปลี่ยน)
+  onSnapshot(collection(db, "menu"), s => {
+    menuPrice = Object.fromEntries(s.docs.map(d => [d.id, d.data().price]));
+    paint();
+  }, () => {});
   const q = query(collection(db, "orders"),
     where("createdAt", ">=", from), where("createdAt", "<", to), orderBy("createdAt", "desc"));
 
@@ -174,7 +183,7 @@ function board(user, role) {
         <span class="tt">${hhmm(o.at)}</span>
       </div>
       <ul>${(o.items || []).map((l, i) => `<li>
-        <span class="ln">${lineName(l)}</span>
+        <span class="ln">${lineName(l)}${priceWarn(l)}</span>
         ${open ? `<span class="qed">
             <button data-dec="${o.id}:${i}" aria-label="ลด ${esc(l.name)}">−</button>
             <span class="q">${l.qty}</span>
@@ -183,7 +192,7 @@ function board(user, role) {
           </span>` : `<b>×${l.qty}</b>`}
       </li>`).join("")}</ul>
       <div class="tf">
-        <span class="sum num">${baht(o.total)} ${esc(t("baht"))}</span>
+        <span class="sum num">${baht(o.total)} ${esc(t("baht"))}${totalWarn(o)}</span>
         <span class="acts">${open
           ? `<button class="btn ghost danger" data-cancel="${o.id}">${esc(t("btnCancel"))}</button>
              <button class="btn" data-done="${o.id}">${esc(t("btnServed"))}</button>`
@@ -241,6 +250,17 @@ function board(user, role) {
 // โหมดพม่า: ชื่อพม่าตัวใหญ่ ชื่อไทยตัวเล็กข้างล่าง ไว้อ่านทวนกับลูกค้า
 // บิลเก่าหรือเมนูที่ยังไม่ได้กรอกชื่อพม่า ใช้ชื่อไทยแทน
 // ลำดับ: ชื่อพม่าที่เจ้าของกรอก (สด) → ที่ติดมากับบิล → แปลอัตโนมัติจากชื่อไทย
+// เตือนเมื่อราคา/ยอดในบิลไม่ตรงเมนู (ลูกค้าแก้ข้อมูลส่งมาเอง หรือเจ้าของเพิ่งแก้ราคา)
+const priceWarn = l => {
+  if (!menuPrice) return "";
+  const p = menuPrice[l.menuId];
+  if (p === undefined) return `<em class="warn">⚠ ${esc(t("notInMenu"))}</em>`;
+  return p !== l.price ? `<em class="warn">⚠ ${esc(t("priceNow"))} ${baht(p)}</em>` : "";
+};
+const totalWarn = o => {
+  const sum = (o.items || []).reduce((a, l) => a + l.price * l.qty, 0);
+  return (o.items || []).length && sum !== o.total ? `<em class="warn">⚠ ${esc(t("sumMismatch"))} ${baht(sum)}</em>` : "";
+};
 const nameMyOf = l => myNames[l.menuId] || l.nameMy || autoMy(l.name);
 const dishName = l => (getLang() === "my" && nameMyOf(l)) || l.name;
 const lineName = l => getLang() === "my" && nameMyOf(l)

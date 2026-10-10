@@ -1,10 +1,10 @@
 // /admin/report — ยอดขายวันนี้ (สด) + ยอดขายรายเดือน (จาก stats)
 import {
-  db, collection, doc, deleteDoc, query, where, orderBy, onSnapshot, getDocs, Timestamp,
+  db, collection, doc, deleteDoc, query, where, orderBy, onSnapshot, getDocs, Timestamp, limit,
   requireRole, renderAdminChrome, loadSettings, applyCachedSettings,
   auth, updatePassword, t,
   baht, esc, hhmm, dayKey, monthKey, monthLabel, dayRange, pad2,
-  TH_MONTH, TH_DAY, toast, friendlyError, DEFAULT_SHOP,
+  TH_MONTH, TH_DAY, toast, friendlyError, DEFAULT_SHOP, reloadAtMidnight,
 } from "./core.js";
 import { summarize, rankFromStats, dayReportRows, monthReportRows } from "./stats.js";
 import { downloadCsv } from "./csv.js";
@@ -83,6 +83,7 @@ function init(user, role) {
   };
 
   /* ---------------- วันนี้ ---------------- */
+  reloadAtMidnight();
   const { from, to } = dayRange();
   onSnapshot(
     query(collection(db, "orders"),
@@ -290,7 +291,8 @@ function init(user, role) {
       msg.textContent = "กำลังตรวจ…";
       try {
         const snap = await getDocs(query(collection(db, "orders"),
-          where("createdAt", "<", Timestamp.fromDate(cut)), orderBy("createdAt", "asc")));
+          where("createdAt", "<", Timestamp.fromDate(cut)), orderBy("createdAt", "asc"), limit(301)));
+        // limit กันอ่านบิลเก่าทั้งปีในคลิกเดียว (ปีละ ~3 แสนใบ = เกินโควตาอ่านรายวันทันที)
         const docs = snap.docs.slice(0, 300);
         if (!docs.length) { msg.textContent = "ไม่มีบิลเก่าให้ลบแล้ว"; return; }
         for (let i = 0; i < docs.length; i++) {
@@ -298,7 +300,7 @@ function init(user, role) {
           if (i % 25 === 0) msg.textContent = `ลบแล้ว ${i}/${docs.length}…`;
         }
         msg.textContent = snap.size > docs.length
-          ? `ลบไปแล้ว ${docs.length} ใบ ยังเหลือ ${snap.size - docs.length} ใบ — กดซ้ำได้อีก`
+          ? `ลบไปแล้ว ${docs.length} ใบ ยังมีบิลเก่าเหลือ — กดซ้ำได้อีก`
           : `ลบครบแล้ว ${docs.length} ใบ`;
       } catch (e) {
         msg.textContent = friendlyError(e);

@@ -88,13 +88,19 @@ service cloud.firestore {
     match /orders/{orderId} {
       allow create: if isValidNewOrder();
       allow get, list: if isTeam();
-      allow update: if isTeam() && resource.data.status != 'done';
+      // บิลที่เสิร์ฟแล้วล็อกเนื้อหา แต่ยัง "ย้อนกลับ" ได้ (เปลี่ยนแค่ status)
+      allow update: if isTeam() && (resource.data.status != 'done'
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
       allow delete: if isManager();
     }
 
     function isValidNewOrder() {
       let o = request.resource.data;
-      return exists(/databases/$(database)/documents/tables/$(o.token))
+      let tb = /databases/$(database)/documents/tables/$(o.token);
+      return exists(tb)
+          // เลขโต๊ะต้องมาจาก QR จริง (กันส่งเลขโต๊ะปลอม) และโต๊ะต้องไม่ถูกปิดใช้
+          && o.table == get(tb).data.no
+          && get(tb).data.get('active', true) != false
           && o.keys().hasOnly(['token', 'table', 'items', 'total', 'status', 'createdAt'])
           && o.keys().hasAll(['token', 'table', 'items', 'total', 'status', 'createdAt'])
           && o.status == 'new'
