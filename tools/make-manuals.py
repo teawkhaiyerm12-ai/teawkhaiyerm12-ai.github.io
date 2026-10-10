@@ -12,6 +12,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 IMG = ROOT / "docs" / "manual-img"
 OUT = ROOT / "dist" / "handover"
 SITE = "https://teawkhaiyerm12-ai.github.io"
+SHOP = "เตี๋ยวไข่เยิ้ม"
 CHROME = [r"C:\Program Files\Google\Chrome\Application\chrome.exe",
           r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"]
 
@@ -110,7 +111,8 @@ FLOW = """<div class="flow">
 STAFF = f"""
 <section class="cover">
   <div class="big">🧑‍🍳</div>
-  <h1>คู่มือพนักงาน<br>ระบบสั่งอาหารผ่าน QR</h1>
+  <h1>คู่มือพนักงาน<br>ร้าน{SHOP}</h1>
+  <div class="sub" style="font-size:17pt;margin-bottom:3mm">ระบบสั่งอาหารผ่าน QR Code</div>
   <div class="sub">อ่าน 10 นาที ใช้งานได้ทั้งวัน</div>
   <div class="who">สำหรับ: พนักงานหน้าร้านที่ดูออเดอร์และเสิร์ฟอาหาร<br>
   เปิดได้ทั้งแท็บเล็ตและมือถือ</div>
@@ -243,7 +245,8 @@ STAFF = f"""
 OWNER = f"""
 <section class="cover">
   <div class="big">🏪</div>
-  <h1>คู่มือเจ้าของร้าน<br>ระบบสั่งอาหารผ่าน QR</h1>
+  <h1>คู่มือเจ้าของร้าน<br>ร้าน{SHOP}</h1>
+  <div class="sub" style="font-size:17pt;margin-bottom:3mm">ระบบสั่งอาหารผ่าน QR Code</div>
   <div class="sub">ตั้งค่าร้าน · จัดการเมนู · ทำ QR โต๊ะ · ดูยอดขาย · ดูแลระบบ</div>
   <div class="who">รหัสผ่านและลิงก์ทั้งหมดอยู่ใน <b>"เอกสารส่งมอบระบบ"</b> แยกเล่ม<br>
   เก็บเอกสารนั้นไว้ในที่ปลอดภัย</div>
@@ -444,5 +447,5 @@ def build(name, title, body):
 
 
 if __name__ == "__main__":
-    build("คู่มือพนักงาน", "คู่มือพนักงาน — ระบบสั่งอาหารผ่าน QR", STAFF)
-    build("คู่มือเจ้าของร้าน", "คู่มือเจ้าของร้าน — ระบบสั่งอาหารผ่าน QR", OWNER)
+    build(f"คู่มือพนักงาน - {SHOP}", f"คู่มือพนักงาน — {SHOP}", STAFF)
+    build(f"คู่มือเจ้าของร้าน - {SHOP}", f"คู่มือเจ้าของร้าน — {SHOP}", OWNER)

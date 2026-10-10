@@ -288,7 +288,7 @@ async function seed() {
   const rows = await (await fetch("/_sdk/seed.json")).json();
   const db = load();
 
-  db["settings/shop"] = { name: "ครัวบ้านสมทรง", palette: "" };
+  db["settings/shop"] = { name: "เตี๋ยวไข่เยิ้ม", palette: "" };
   db["settings/roles"] = { managers: ["u_manager"], staff: ["u_staff"] };
 
   for (let i = 1; i <= 8; i++) {

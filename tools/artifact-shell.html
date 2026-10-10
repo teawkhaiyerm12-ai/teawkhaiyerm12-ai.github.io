@@ -81,11 +81,11 @@ function rid() {
   return Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12);
 }
 function seed(force) {
-  if (!force && localStorage.getItem("mock-firestore-seeded") === "2") return;
+  if (!force && localStorage.getItem("mock-firestore-seeded") === "3") return;
   ["mock-firestore", "mock-firestore-v", "mock-auth-user", "qr-order-settings"]
     .forEach(function (k) { localStorage.removeItem(k); });
   var db = {};
-  db["settings/shop"] = { name: "ครัวบ้านสมทรง", palette: "" };
+  db["settings/shop"] = { name: "เตี๋ยวไข่เยิ้ม", palette: "" };
   db["settings/roles"] = { managers: ["u_manager"], staff: ["u_staff"] };
   SEED.tables.forEach(function (no) {
     db["tables/" + rid()] = { no: no, active: true, createdAt: new Date().toISOString() };
@@ -98,7 +98,7 @@ function seed(force) {
   });
   db["settings/menuNames"] = names;
   localStorage.setItem("mock-firestore", JSON.stringify(db));
-  localStorage.setItem("mock-firestore-seeded", "2");
+  localStorage.setItem("mock-firestore-seeded", "3");
 }
 seed(false);
 

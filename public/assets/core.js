@@ -256,7 +256,7 @@ export function friendlyError(e) {
 }
 
 /* ---------------- ตั้งค่าร้าน (ชื่อ + ธีมสี) ---------------- */
-export const DEFAULT_SHOP = "ร้านอาหาร";
+export const DEFAULT_SHOP = "เตี๋ยวไข่เยิ้ม";
 export const PALETTES = [
   { id: "",      name: "ส้มอบอุ่น",   dot: "#C2410C" },
   { id: "red",   name: "แดงมงคล",    dot: "#B4232E" },
