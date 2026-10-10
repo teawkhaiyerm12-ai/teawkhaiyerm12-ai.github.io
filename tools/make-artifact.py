@@ -55,8 +55,9 @@ MOCK_APP = 'function initializeApp(c){return{name:"[MOCK]",options:c}}'
 
 MOCK_AUTH = r"""
 var AKEY = "mock-auth-user";
-var USERS = { "owner@qrmenu.local": { uid: "u_manager", pw: "password1234" },
-              "staff@qrmenu.local": { uid: "u_staff",   pw: "123456" } };
+// ห้ามใช้รหัสเดียวกับระบบจริง — เดโมเป็นหน้าสาธารณะ ใครเปิดก็เห็นรหัสนี้
+var USERS = { "owner@qrmenu.local": { uid: "u_manager", pw: "demo-owner" },
+              "staff@qrmenu.local": { uid: "u_staff",   pw: "demo-staff" } };
 var ALIST = new Set();
 function authRead(){ try { return JSON.parse(localStorage.getItem(AKEY) || "null"); } catch (e) { return null; } }
 function authEmit(){ var u = authRead(); ALIST.forEach(function (f) { f(u); }); }

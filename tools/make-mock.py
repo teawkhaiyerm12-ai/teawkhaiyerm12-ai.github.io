@@ -100,8 +100,8 @@ export function initializeApp(cfg) { return { name: "[MOCK]", options: cfg }; }
 AUTH_JS = """// mock ของ firebase-auth.js — บัญชีอยู่ใน localStorage
 const KEY = "mock-auth-user";
 const USERS = {
-  "manager@demo.local": { uid: "u_manager", pw: "123456" },
-  "staff@demo.local":   { uid: "u_staff",   pw: "123456" },
+  "manager@demo.local": { uid: "u_manager", pw: "demo-owner" },
+  "staff@demo.local":   { uid: "u_staff",   pw: "demo-staff" },
 };
 const listeners = new Set();
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; } };
@@ -320,9 +320,9 @@ await seed();
 BANNER_JS = """// แถบเตือนโหมดจำลอง + ปุ่มกรอกบัญชีทดสอบให้อัตโนมัติบนหน้าล็อกอิน
 (function () {
   var ACCOUNTS = [
-    { role: "ผู้จัดการ", email: "manager@demo.local", pw: "123456",
+    { role: "ผู้จัดการ", email: "manager@demo.local", pw: "demo-owner",
       note: "เข้าได้ทุกหน้า แก้เมนู ดูยอดรายเดือน" },
-    { role: "พนักงานหน้าร้าน", email: "staff@demo.local", pw: "123456",
+    { role: "พนักงานหน้าร้าน", email: "staff@demo.local", pw: "demo-staff",
       note: "เห็นเฉพาะออเดอร์ + ยอดวันนี้" }
   ];
 
