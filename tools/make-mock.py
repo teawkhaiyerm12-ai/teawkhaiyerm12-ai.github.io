@@ -408,10 +408,10 @@ HOME = """<!doctype html>
  <div class="card">
   <table style="width:100%;border-collapse:collapse;font-size:14px">
    <tr><td style="padding:6px 0"><b>ผู้จัดการ</b></td>
-       <td class="acc">manager@demo.local</td><td class="acc">123456</td>
+       <td class="acc">manager@demo.local</td><td class="acc">demo-owner</td>
        <td style="color:var(--muted);font-size:13px">เห็นทุกหน้า แก้เมนู ดูยอดรายเดือน</td></tr>
    <tr><td style="padding:6px 0"><b>พนักงานหน้าร้าน</b></td>
-       <td class="acc">staff@demo.local</td><td class="acc">123456</td>
+       <td class="acc">staff@demo.local</td><td class="acc">demo-staff</td>
        <td style="color:var(--muted);font-size:13px">เห็นเฉพาะออเดอร์ + ยอดวันนี้</td></tr>
   </table>
  </div>
