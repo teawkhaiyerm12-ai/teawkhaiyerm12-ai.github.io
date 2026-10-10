@@ -3,7 +3,7 @@ import {
   auth, db, collection, doc, query, where, orderBy, onSnapshot, updateDoc, deleteDoc,
   signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence,
   currentUser, loadRole, renderAdminChrome, loadSettings, applyCachedSettings,
-  t, setLang, getLang, LANGS, LOGIN_ACCOUNTS, userLabel,
+  t, setLang, getLang, LANGS, LOGIN_ACCOUNTS, userLabel, autoMy,
   baht, esc, hhmm, dayKey, dayRange, toast, friendlyError,
 } from "./core.js";
 import { writeStats } from "./stats.js";
@@ -240,7 +240,8 @@ function board(user, role) {
 
 // โหมดพม่า: ชื่อพม่าตัวใหญ่ ชื่อไทยตัวเล็กข้างล่าง ไว้อ่านทวนกับลูกค้า
 // บิลเก่าหรือเมนูที่ยังไม่ได้กรอกชื่อพม่า ใช้ชื่อไทยแทน
-const nameMyOf = l => myNames[l.menuId] || l.nameMy || "";
+// ลำดับ: ชื่อพม่าที่เจ้าของกรอก (สด) → ที่ติดมากับบิล → แปลอัตโนมัติจากชื่อไทย
+const nameMyOf = l => myNames[l.menuId] || l.nameMy || autoMy(l.name);
 const dishName = l => (getLang() === "my" && nameMyOf(l)) || l.name;
 const lineName = l => getLang() === "my" && nameMyOf(l)
   ? `<span lang="my">${esc(nameMyOf(l))}</span><small>${esc(l.name)}</small>`

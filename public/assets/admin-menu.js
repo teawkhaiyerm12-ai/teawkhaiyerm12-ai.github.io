@@ -2,7 +2,7 @@
 import {
   db, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot,
   settingsRef, applySettings, applyCachedSettings, requireRole, renderAdminChrome,
-  shrinkImage, baht, esc, CATS, PALETTES, DEFAULT_SHOP, toast, friendlyError,
+  shrinkImage, baht, esc, CATS, PALETTES, DEFAULT_SHOP, toast, friendlyError, autoMy,
 } from "./core.js";
 
 const view = document.getElementById("view");
@@ -109,7 +109,7 @@ function init(user, role) {
         <div class="names">
           <input class="fld" value="${esc(m.name)}" data-name="${esc(m.id)}" aria-label="ชื่อเมนู" maxlength="60">
           <input class="fld my" lang="my" value="${esc(m.nameMy || "")}" data-namemy="${esc(m.id)}"
-                 placeholder="ชื่อภาษาพม่า (โชว์บนจอพนักงาน)" aria-label="ชื่อภาษาพม่า" maxlength="80">
+                 placeholder="${esc(autoMy(m.name) ? "แปลอัตโนมัติ: " + autoMy(m.name) : "ชื่อภาษาพม่า (โชว์บนจอพนักงาน)")}" aria-label="ชื่อภาษาพม่า" maxlength="80">
           <div class="uid" title="รหัสเมนู (UID) — ใช้อ้างอิงในรายงาน ไม่เปลี่ยนแม้แก้ชื่อหรือราคา">
             UID <code>${esc(m.id)}</code></div>
         </div>
