@@ -6,7 +6,7 @@
 // ponytail: คำนวณใหม่ทั้งวันแล้ว set ทับ ไม่ใช้ increment
 // เพราะ increment จะเพี้ยนเมื่อบิลถูกยกเลิกหรือแก้ทีหลัง ส่วน set ทับถูกเสมอ
 // (ต้นทุน 1 write ต่อการเปลี่ยนแปลง ~600 writes/วัน จากโควตา 20,000)
-import { db, doc, setDoc, dayKey, monthKey, hhmm, monthLabel, TH_DAY } from "./core.js";
+import { db, doc, setDoc, dayKey, monthKey, hhmm, monthLabel, TH_DAY, optText } from "./core.js";
 
 let timer = null;
 
@@ -79,7 +79,8 @@ export function dayReportRows(day, shop, orders) {
     ["เวลา", "โต๊ะ", "สถานะ", "รายการ", "จำนวนชิ้น", "ยอด (บาท)"],
     ...live.map(o => [
       hhmm(at(o)), o.table, o.status === "done" ? "เสิร์ฟแล้ว" : "รอเสิร์ฟ",
-      (o.items || []).map(l => `${l.name} x${l.qty}`).join(" + "),
+      (o.items || []).map(l => `${l.name}${(l.opts || []).length ? ` (${optText(l)})` : ""}` +
+        `${l.note ? ` [หมายเหตุ: ${l.note}]` : ""} x${l.qty}`).join(" + "),
       (o.items || []).reduce((a, l) => a + l.qty, 0), o.total,
     ]),
     ["รวมทั้งวัน", "", "", "", `=SUM(E${bFirst}:E${bLast})`, `=SUM(F${bFirst}:F${bLast})`],

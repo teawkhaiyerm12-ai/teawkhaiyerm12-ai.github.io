@@ -3,13 +3,14 @@ import {
   auth, db, collection, doc, query, where, orderBy, onSnapshot, updateDoc, deleteDoc,
   signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence,
   currentUser, loadRole, renderAdminChrome, loadSettings, applyCachedSettings,
-  t, setLang, getLang, LANGS, LOGIN_ACCOUNTS, userLabel, autoMy,
+  t, setLang, getLang, LANGS, LOGIN_ACCOUNTS, userLabel, autoMy, optionsRef, libPrice,
   baht, esc, hhmm, dayKey, dayRange, toast, friendlyError, reloadAtMidnight,
 } from "./core.js";
 import { writeStats } from "./stats.js";
 
 const view = document.getElementById("view");
 let myNames = {};          // menuId -> ชื่อพม่า อ่านจาก settings/menuNames
+let optLib = [];           // คลังตัวเลือก (settings/options) ใช้ตรวจราคาตัวเลือกในบิล
 let menuPrice = null;      // menuId -> ราคาปัจจุบัน (null = ยังโหลดไม่เสร็จ ไม่เตือน)
 applyCachedSettings();
 
@@ -138,6 +139,11 @@ function board(user, role) {
     where("createdAt", ">=", from), where("createdAt", "<", to), orderBy("createdAt", "desc"));
 
   // ชื่อพม่าอ่านสดจาก doc เดียว — เจ้าของกรอกเพิ่มทีหลัง บิลที่ค้างอยู่ก็เปลี่ยนตามทันที
+  onSnapshot(optionsRef, s => {
+    optLib = (s.exists() && s.data().groups) || [];
+    paint();
+  }, () => {});
+
   onSnapshot(doc(db, "settings", "menuNames"), s => {
     myNames = (s.exists() && s.data()) || {};
     if (getLang() === "my") paint();
@@ -251,11 +257,13 @@ function board(user, role) {
 // บิลเก่าหรือเมนูที่ยังไม่ได้กรอกชื่อพม่า ใช้ชื่อไทยแทน
 // ลำดับ: ชื่อพม่าที่เจ้าของกรอก (สด) → ที่ติดมากับบิล → แปลอัตโนมัติจากชื่อไทย
 // เตือนเมื่อราคา/ยอดในบิลไม่ตรงเมนู (ลูกค้าแก้ข้อมูลส่งมาเอง หรือเจ้าของเพิ่งแก้ราคา)
+// ราคาที่ควรเป็น = ราคาเมนู + ราคาตัวเลือกตามคลังปัจจุบัน (ตัวเลือกที่ไม่มีในคลังแล้ว ใช้ราคาที่ติดมากับบิล)
 const priceWarn = l => {
   if (!menuPrice) return "";
   const p = menuPrice[l.menuId];
   if (p === undefined) return `<em class="warn">⚠ ${esc(t("notInMenu"))}</em>`;
-  return p !== l.price ? `<em class="warn">⚠ ${esc(t("priceNow"))} ${baht(p)}</em>` : "";
+  const want = p + (l.opts || []).reduce((a, o) => a + (libPrice(optLib, o) ?? (Number(o.p) || 0)), 0);
+  return want !== l.price ? `<em class="warn">⚠ ${esc(t("priceNow"))} ${baht(want)}</em>` : "";
 };
 const totalWarn = o => {
   const sum = (o.items || []).reduce((a, l) => a + l.price * l.qty, 0);
@@ -263,9 +271,13 @@ const totalWarn = o => {
 };
 const nameMyOf = l => myNames[l.menuId] || l.nameMy || autoMy(l.name);
 const dishName = l => (getLang() === "my" && nameMyOf(l)) || l.name;
-const lineName = l => getLang() === "my" && nameMyOf(l)
+const optName = n => (getLang() === "my" && autoMy(n)) || n;
+const lineExtra = l =>
+  ((l.opts || []).length ? `<span class="opt">${esc(l.opts.map(o => optName(o.n)).join(" · "))}</span>` : "") +
+  (l.note ? `<span class="note">📝 ${esc(l.note)}</span>` : "");
+const lineName = l => (getLang() === "my" && nameMyOf(l)
   ? `<span lang="my">${esc(nameMyOf(l))}</span><small>${esc(l.name)}</small>`
-  : esc(l.name);
+  : esc(l.name)) + lineExtra(l);
 
 // เสียงเตือนสั้น ๆ ด้วย WebAudio จะได้ไม่ต้องโหลดไฟล์เสียง
 let ac = null;

@@ -75,6 +75,11 @@ tc("พนักงานแก้ชื่อร้าน", "DENY", "staff", "u
 tc("ลูกค้า (ไม่ล็อกอิน) อ่านชื่อร้าน", "ALLOW", "anon", "get", "settings/shop", { existing: { name: "a" } });
 tc("ลูกค้า (ไม่ล็อกอิน) ไล่ดูรายการโต๊ะทั้งหมด", "DENY", "anon", "list", "tables/t1", { existing: { no: 1 } });
 tc("พนักงานเพิ่มโต๊ะ", "DENY", "staff", "create", "tables/t9", { data: { no: 9, active: true } });
+const OPTS = { groups: [{ id: "soup", name: "น้ำซุป", type: "one", required: true, choices: [{ name: "น้ำ", price: 0 }] }] };
+tc("ลูกค้า (ไม่ล็อกอิน) อ่านคลังตัวเลือก", "ALLOW", "anon", "get", "settings/options", { existing: OPTS });
+tc("เจ้าของแก้คลังตัวเลือก", "ALLOW", "owner", "update", "settings/options", { existing: OPTS, data: OPTS });
+tc("พนักงานแก้ราคาตัวเลือก", "DENY", "staff", "update", "settings/options", { existing: OPTS, data: OPTS });
+tc("ลูกค้าแก้ราคาตัวเลือก", "DENY", "anon", "update", "settings/options", { existing: OPTS, data: OPTS });
 
 (async () => {
   const token = await adminToken();

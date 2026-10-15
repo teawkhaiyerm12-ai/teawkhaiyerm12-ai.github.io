@@ -3,6 +3,7 @@
 import {
   db, collection, doc, getDoc, getDocs, addDoc, serverTimestamp,
   loadSettings, applyCachedSettings, baht, esc, CATS, toast, friendlyError, withTimeout,
+  optionsRef, groupsFor, optText,
 } from "./core.js";
 
 const app = document.getElementById("app");
@@ -28,10 +29,12 @@ if (!token) {
 }
 
 async function start() {
-  const [tableSnap] = await Promise.all([
+  const [tableSnap, , optSnap] = await Promise.all([
     withTimeout(getDoc(doc(db, "tables", token))),
     loadSettings(),
+    withTimeout(getDoc(optionsRef)).catch(() => null),   // ไม่มีคลังตัวเลือก = ทุกเมนูไม่มีตัวเลือก
   ]);
+  const lib = (optSnap && optSnap.exists() && optSnap.data().groups) || [];
 
   if (!tableSnap.exists() || tableSnap.data().active === false) {
     return screenMsg("QR นี้ใช้ไม่ได้แล้ว", "เรียกพนักงานเพื่อขอ QR ใหม่ หรือสั่งที่เคาน์เตอร์ได้เลย");
@@ -47,11 +50,12 @@ async function start() {
 
   if (!menu.length) return screenMsg("ยังไม่มีเมนู", "ทางร้านกำลังจัดเมนูอยู่ เรียกพนักงานได้เลย");
 
-  render(tableNo, menu);
+  render(tableNo, menu, lib);
 }
 
-function render(tableNo, menu) {
-  const cart = new Map();     // id -> qty
+function render(tableNo, menu, lib) {
+  // ตะกร้าเป็นรายการบรรทัด ไม่ใช่ id -> qty: จานเดียวกันแต่ตัวเลือก/หมายเหตุต่างกัน = คนละบรรทัด
+  const cart = [];            // { key, menuId, name, nameMy, base, opts: [{g,n,p}], note, qty }
   let filter = null;
   let sending = false;
 
@@ -61,6 +65,10 @@ function render(tableNo, menu) {
   const groups = other ? [...cats, OTHER] : cats;
   const inGroup = (m, g) => g === OTHER ? !cats.includes(m.cat) : m.cat === g;
   const groupLabel = g => g === OTHER ? "อื่น ๆ" : g;
+  const hasOpts = m => groupsFor(m, lib).length > 0;
+  const unit = l => l.base + l.opts.reduce((a, o) => a + o.p, 0);
+  const qtyOf = id => cart.filter(l => l.menuId === id).reduce((a, l) => a + l.qty, 0);
+  const plain = id => cart.find(l => l.menuId === id && !l.opts.length && !l.note);
 
   app.innerHTML = `
     <div class="cust">
@@ -78,14 +86,13 @@ function render(tableNo, menu) {
     </div>
     <div class="cartbar">
       <div class="inner">
-        <div class="sumline"><span class="cnt"></span><b class="tot"></b></div>
+        <button class="sumline" id="viewcart" type="button"><span class="cnt"></span><b class="tot"></b></button>
         <button class="submit">ส่งออเดอร์ไปที่ครัว</button>
       </div>
     </div>`;
 
   applyCachedSettings();
 
-  const $ = s => app.parentElement.querySelector(s);
   const list = app.querySelector(".list");
   const chips = app.querySelector(".chips");
   const bar = document.querySelector(".cartbar");
@@ -105,61 +112,173 @@ function render(tableNo, menu) {
       const items = menu.filter(m => inGroup(m, g));
       if (!items.length) return "";
       return `<div class="sechead">${esc(groupLabel(g))}</div>` + items.map(m => {
-        const q = cart.get(m.id) || 0;
         const sold = m.soldout === true;
+        const q = qtyOf(m.id), pl = plain(m.id);
         const pic = m.img ? `<img src="${m.img}" alt="" loading="lazy">` : esc(m.emoji || "🍽️");
+        // เมนูมีตัวเลือก: + เปิดหน้าเลือก / ไม่มีตัวเลือก: + ใส่ตะกร้าเลย (แตะรูปหรือชื่อเพื่อใส่หมายเหตุได้)
+        const ctl = sold ? "" : (hasOpts(m) || !pl)
+          ? `${q ? `<span class="inbag">×${q}</span>` : ""}<button class="add" data-add="${esc(m.id)}" aria-label="เพิ่ม ${esc(m.name)}">+</button>`
+          : `<div class="stepper">
+               <button data-sub="${esc(m.id)}" aria-label="ลด ${esc(m.name)}">−</button>
+               <span class="q">${pl.qty}</span>
+               <button data-add="${esc(m.id)}" aria-label="เพิ่ม ${esc(m.name)}">+</button>
+             </div>`;
         return `<div class="item ${sold ? "off" : ""} ${m.img ? "pic" : ""}">
-          <div class="ph">${pic}</div>
-          <div class="info">
+          <div class="ph" data-open="${sold ? "" : esc(m.id)}">${pic}</div>
+          <div class="info" data-open="${sold ? "" : esc(m.id)}">
             <div class="nm">${esc(m.name)}</div>
-            ${sold ? `<div class="so">วันนี้หมด</div>` : `<div class="pr">${baht(m.price)} บาท</div>`}
+            ${sold ? `<div class="so">วันนี้หมด</div>`
+                   : `<div class="pr">${baht(m.price)} บาท</div>${hasOpts(m) ? `<div class="hasopt">มีตัวเลือก</div>` : ""}`}
           </div>
-          ${sold ? "" : q === 0
-            ? `<button class="add" data-add="${esc(m.id)}" aria-label="เพิ่ม ${esc(m.name)}">+</button>`
-            : `<div class="stepper">
-                 <button data-sub="${esc(m.id)}" aria-label="ลด ${esc(m.name)}">−</button>
-                 <span class="q">${q}</span>
-                 <button data-add="${esc(m.id)}" aria-label="เพิ่ม ${esc(m.name)}">+</button>
-               </div>`}
+          <div class="ctl">${ctl}</div>
         </div>`;
       }).join("");
     }).join("");
   }
 
+  function addLine(m, opts = [], note = "", qty = 1) {
+    const key = [m.id, ...opts.map(o => o.g + ":" + o.n), note].join("|");
+    const hit = cart.find(l => l.key === key);
+    if (hit) hit.qty += qty;
+    else {
+      if (cart.length >= 30) { toast("สั่งได้สูงสุด 30 รายการต่อบิล", "err"); return false; }
+      cart.push({ key, menuId: m.id, name: String(m.name), nameMy: m.nameMy ? String(m.nameMy) : "",
+                  base: Number(m.price), opts, note, qty });
+    }
+    return true;
+  }
+
   list.addEventListener("click", e => {
-    const a = e.target.closest("[data-add]"), s = e.target.closest("[data-sub]");
+    const a = e.target.closest("[data-add]"), s = e.target.closest("[data-sub]"),
+          o = e.target.closest("[data-open]");
     if (a) {
-      const id = a.dataset.add;
-      if (cart.size >= 30 && !cart.has(id)) return toast("สั่งได้สูงสุด 30 รายการต่อบิล", "err");
-      cart.set(id, (cart.get(id) || 0) + 1);
+      const m = menu.find(x => x.id === a.dataset.add);
+      if (hasOpts(m)) return openItem(m);
+      addLine(m);
     } else if (s) {
-      const id = s.dataset.sub, q = (cart.get(id) || 0) - 1;
-      q > 0 ? cart.set(id, q) : cart.delete(id);
+      const l = plain(s.dataset.sub);
+      if (l && --l.qty <= 0) cart.splice(cart.indexOf(l), 1);
+    } else if (o && o.dataset.open) {
+      return openItem(menu.find(x => x.id === o.dataset.open));
     } else return;
     paintList(); paintCart();
   });
 
-  const lines = () => [...cart.entries()].map(([id, qty]) => {
-    const m = menu.find(x => x.id === id);
-    // nameMy snapshot ลงบิลด้วย จอพนักงานจะได้ไม่ต้องไปอ่าน collection menu (มีรูป กิน egress)
-    return { menuId: id, name: String(m.name), ...(m.nameMy ? { nameMy: String(m.nameMy) } : {}),
-             price: Number(m.price), qty };
-  });
-  const sum = ls => ls.reduce((a, l) => a + l.price * l.qty, 0);
-
-  function paintCart() {
-    const ls = lines(), n = ls.reduce((a, l) => a + l.qty, 0);
-    bar.classList.toggle("show", n > 0);
-    bar.querySelector(".cnt").textContent = `${n} รายการ`;
-    bar.querySelector(".tot").textContent = `${baht(sum(ls))} บาท`;
+  /* ---------- หน้าต่างเลือกตัวเลือก + หมายเหตุ ---------- */
+  function openItem(m) {
+    const gs = groupsFor(m, lib);
+    let qty = 1;
+    const sh = document.createElement("div");
+    sh.className = "optsheet";
+    sh.innerHTML = `<div class="panel" role="dialog" aria-label="${esc(m.name)}">
+      <div class="oh">
+        ${m.img ? `<img src="${m.img}" alt="">` : ""}
+        <div><div class="onm">${esc(m.name)}</div><div class="opr">${baht(m.price)} บาท</div></div>
+        <button class="x" aria-label="ปิด">✕</button>
+      </div>
+      <div class="obody">
+        ${gs.map(g => `<fieldset class="og" data-g="${esc(g.id)}">
+          <legend>${esc(g.name)} <span>${g.type === "one" ? (g.required ? "เลือก 1 อย่าง · จำเป็น" : "เลือก 1 อย่าง") : "เลือกได้หลายอย่าง"}</span></legend>
+          ${g.choices.map((c, i) => `<label class="oc">
+            <input type="${g.type === "one" ? "radio" : "checkbox"}" name="g_${esc(g.id)}" value="${i}">
+            <span class="cn">${esc(c.name)}</span>
+            <span class="cp">${Number(c.price) ? "+" + baht(c.price) : ""}</span>
+          </label>`).join("")}
+        </fieldset>`).join("")}
+        <label class="onote">หมายเหตุถึงร้าน
+          <textarea maxlength="100" rows="2" placeholder="เช่น ไม่ใส่ผัก ไม่เผ็ด แยกน้ำ"></textarea></label>
+      </div>
+      <div class="ofoot">
+        <div class="stepper"><button data-q="-1" aria-label="ลด">−</button><span class="q">1</span><button data-q="1" aria-label="เพิ่ม">+</button></div>
+        <button class="btn oadd"></button>
+      </div>
+    </div>`;
+    document.body.appendChild(sh);
+    const close = () => sh.remove();
+    const picked = () => gs.flatMap(g => [...sh.querySelectorAll(`[data-g="${g.id}"] input:checked`)]
+      .map(inp => { const c = g.choices[+inp.value]; return { g: g.name, n: c.name, p: Number(c.price) || 0 }; }));
+    const paint = () => {
+      const u = Number(m.price) + picked().reduce((a, o) => a + o.p, 0);
+      sh.querySelector(".q").textContent = qty;
+      sh.querySelector(".oadd").textContent = `ใส่ตะกร้า · ${baht(u * qty)} บาท`;
+    };
+    sh.addEventListener("change", e => {
+      e.target.closest(".og")?.classList.remove("need");
+      paint();
+    });
+    sh.addEventListener("click", e => {
+      if (e.target === sh || e.target.closest(".x")) return close();
+      const q = e.target.closest("[data-q]");
+      if (q) { qty = Math.max(1, Math.min(20, qty + +q.dataset.q)); paint(); }
+      if (e.target.closest(".oadd")) {
+        const miss = gs.find(g => g.required && !sh.querySelector(`[data-g="${g.id}"] input:checked`));
+        if (miss) {
+          const box = sh.querySelector(`[data-g="${miss.id}"]`);
+          box.classList.add("need");
+          box.scrollIntoView({ block: "center", behavior: "smooth" });
+          return toast(`กรุณาเลือก${miss.name}`, "err");
+        }
+        const note = sh.querySelector("textarea").value.trim().slice(0, 100);
+        if (addLine(m, picked(), note, qty)) { close(); paintList(); paintCart(); }
+      }
+    });
+    paint();
   }
 
-  submit.addEventListener("click", async () => {
-    if (sending) return;
-    const ls = lines();
-    if (!ls.length) return;
-    const total = sum(ls);
+  /* ---------- ตะกร้า: ดู/แก้ก่อนส่ง ---------- */
+  function openCart() {
+    const sh = document.createElement("div");
+    sh.className = "optsheet";
+    const paint = () => {
+      if (!cart.length) return sh.remove();
+      sh.innerHTML = `<div class="panel" role="dialog" aria-label="ตะกร้า">
+        <div class="oh"><div><div class="onm">ตะกร้า · โต๊ะ ${esc(tableNo)}</div></div><button class="x" aria-label="ปิด">✕</button></div>
+        <div class="obody">${cart.map((l, i) => `<div class="cl">
+          <div class="cli"><div class="cln">${esc(l.name)}</div>
+            ${l.opts.length ? `<div class="clo">${esc(optText(l))}</div>` : ""}
+            ${l.note ? `<div class="clnote">📝 ${esc(l.note)}</div>` : ""}
+            <div class="clp">${baht(unit(l) * l.qty)} บาท</div></div>
+          <div class="stepper"><button data-cq="${i}:-1" aria-label="ลด">−</button><span class="q">${l.qty}</span><button data-cq="${i}:1" aria-label="เพิ่ม">+</button></div>
+        </div>`).join("")}</div>
+        <div class="ofoot"><b class="otot">${baht(sum())} บาท</b><button class="btn oadd" data-send>ส่งออเดอร์ไปที่ครัว</button></div>
+      </div>`;
+    };
+    sh.addEventListener("click", e => {
+      if (e.target === sh || e.target.closest(".x")) return sh.remove();
+      const q = e.target.closest("[data-cq]");
+      if (q) {
+        const [i, d] = q.dataset.cq.split(":").map(Number);
+        cart[i].qty += d;
+        if (cart[i].qty <= 0) cart.splice(i, 1);
+        paint(); paintList(); paintCart();
+      }
+      if (e.target.closest("[data-send]")) { sh.remove(); send(); }
+    });
+    document.body.appendChild(sh);
+    paint();
+  }
+
+  const sum = () => cart.reduce((a, l) => a + unit(l) * l.qty, 0);
+
+  function paintCart() {
+    const n = cart.reduce((a, l) => a + l.qty, 0);
+    bar.classList.toggle("show", n > 0);
+    bar.querySelector(".cnt").textContent = `${n} รายการ · ดูตะกร้า`;
+    bar.querySelector(".tot").textContent = `${baht(sum())} บาท`;
+  }
+  bar.querySelector("#viewcart").onclick = openCart;
+  submit.addEventListener("click", send);
+
+  async function send() {
+    if (sending || !cart.length) return;
+    const total = sum();
     if (total > 20000) return toast("ยอดเกินที่ระบบรับได้ กรุณาแยกบิลหรือเรียกพนักงาน", "err");
+    // nameMy snapshot ลงบิลด้วย จอพนักงานจะได้ไม่ต้องไปอ่าน collection menu (มีรูป กิน egress)
+    const items = cart.map(l => ({
+      menuId: l.menuId, name: l.name, ...(l.nameMy ? { nameMy: l.nameMy } : {}),
+      price: unit(l), qty: l.qty,
+      ...(l.opts.length ? { opts: l.opts } : {}), ...(l.note ? { note: l.note } : {}),
+    }));
 
     sending = true;
     submit.disabled = true;
@@ -168,12 +287,12 @@ function render(tableNo, menu) {
       await addDoc(collection(db, "orders"), {
         token,
         table: tableNo,
-        items: ls,
+        items,
         total,
         status: "new",
         createdAt: serverTimestamp(),
       });
-      cart.clear();
+      cart.length = 0;
       paintList(); paintCart();
       done();
     } catch (e) {
@@ -183,7 +302,7 @@ function render(tableNo, menu) {
       submit.disabled = false;
       submit.textContent = "ส่งออเดอร์ไปที่ครัว";
     }
-  });
+  }
 
   function done() {
     const sheet = document.createElement("div");

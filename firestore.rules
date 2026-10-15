@@ -49,6 +49,13 @@ service cloud.firestore {
       allow write: if isManager() && request.resource.data.size() <= 300;
     }
 
+    // คลังตัวเลือกเสริม (น้ำ/แห้ง เส้น ท็อปปิ้ง ...) ลูกค้าต้องอ่านได้ตอนเปิดเมนู
+    match /settings/options {
+      allow get: if true;
+      allow write: if isManager() && request.resource.data.groups is list
+          && request.resource.data.groups.size() <= 30;
+    }
+
     match /settings/roles {
       allow get: if isTeam() || isOwner();   // แอปอ่านเพื่อรู้ว่าตัวเองเป็น manager หรือ staff
       allow create: if isOwner();            // ครั้งแรกเท่านั้น — แอปของเจ้าของสร้างให้

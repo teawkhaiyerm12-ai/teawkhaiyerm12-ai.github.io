@@ -211,6 +211,19 @@ h2.sec{font-size:16px;font-weight:600;margin:30px 0 10px}
 .tile .rm:hover{background:var(--chili)}
 .sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
 .names{display:flex;flex-direction:column;gap:5px;min-width:0}
+.optpick{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:12.5px;color:var(--ink-2)}
+.optpick span{color:var(--muted)}
+.optpick label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.optpick input{accent-color:var(--accent)}
+.optlib{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.og-card{display:flex;flex-direction:column;gap:6px}
+.og-head{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:4px}
+.og-head .fld:first-child{flex:1 1 140px;font-weight:600}
+.og-head select{flex:none;width:auto}
+.og-row{display:flex;gap:6px;align-items:center}
+.og-row .fld:first-of-type{flex:1;min-width:0}
+.og-row .num{width:76px;flex:none}
+.og-row .plus{color:var(--muted)}
 .names .fld.my{font-family:"Myanmar Text","Noto Sans Myanmar",Padauk,system-ui,sans-serif;font-size:13.5px;line-height:1.8}
 .ticket .ln small{display:block;font-size:11.5px;color:var(--muted);line-height:1.4}
 .ticket .warn{display:block;font-style:normal;font-size:11.5px;font-weight:600;color:var(--chili);line-height:1.4}
@@ -332,7 +345,10 @@ h2.sec{font-size:16px;font-weight:600;margin:30px 0 10px}
 .item .so{font-size:12px;color:var(--chili);margin-top:2px}
 .item.off{opacity:.45}
 /* ปุ่มบวก/ตัวนับอยู่แถวล่างสุดของการ์ด ชิดขวา — การ์ดแคบ ถ้าให้ลอยทับจะดันราคาตกบรรทัด */
-.stepper,.item .add{margin:auto 8px 0 auto}
+.item .ctl{margin:auto 8px 0 auto;display:flex;align-items:center;gap:8px}
+.item .inbag{font-weight:700;font-size:14px;color:var(--accent-ink);font-variant-numeric:tabular-nums}
+.item .hasopt{font-size:11.5px;color:var(--muted)}
+.item .ph,.item .info{cursor:pointer}
 .stepper{display:flex;align-items:center;gap:2px;background:var(--surface);
   border:1px solid var(--line);border-radius:10px;padding:2px}
 .stepper button{width:32px;height:32px;border-radius:8px;
@@ -348,7 +364,8 @@ h2.sec{font-size:16px;font-weight:600;margin:30px 0 10px}
   transform:translateY(140%);transition:transform .28s cubic-bezier(.2,.8,.3,1)}
 .cartbar.show{transform:none}
 .cartbar .inner{width:100%;margin:0 auto}
-.cartbar .sumline{display:flex;justify-content:space-between;font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.cartbar .sumline{display:flex;justify-content:space-between;align-items:baseline;width:100%;font:inherit;font-size:13.5px;color:var(--muted);margin-bottom:8px;padding:2px 0;background:none;border:0;text-align:left;cursor:pointer}
+.cartbar .sumline .cnt{text-decoration:underline;text-underline-offset:3px}
 .cartbar .sumline b{color:var(--ink);font-size:18px;font-family:"Bai Jamjuree",sans-serif;font-variant-numeric:tabular-nums}
 .submit{width:100%;min-height:52px;border-radius:12px;background:var(--accent);color:var(--on-accent);
   font-family:"Bai Jamjuree",sans-serif;font-weight:700;font-size:17px}
@@ -393,3 +410,44 @@ h2.sec{font-size:16px;font-weight:600;margin:30px 0 10px}
 .center-msg .box{max-width:330px}
 .center-msg h1{font-size:21px;font-weight:700;margin-bottom:8px}
 .center-msg p{color:var(--muted);font-size:14.5px;margin:0}
+
+/* ---------- หน้าต่างเลือกตัวเลือก / ตะกร้า (หน้าลูกค้า) ---------- */
+.optsheet{position:fixed;inset:0;z-index:30;background:rgba(8,10,9,.55);display:flex;align-items:flex-end;justify-content:center}
+.optsheet .panel{background:var(--surface);width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;
+  border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2)}
+@media (min-width:600px){.optsheet{align-items:center;padding:24px}.optsheet .panel{border-radius:18px}}
+.optsheet .oh{display:flex;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.optsheet .oh img{width:64px;height:64px;border-radius:10px;object-fit:cover;flex:none}
+.optsheet .oh > div{flex:1;min-width:0}
+.optsheet .onm{font-weight:700;font-size:17px;line-height:1.4}
+.optsheet .opr{color:var(--accent-ink);font-weight:600}
+.optsheet .x{flex:none;width:38px;height:38px;border-radius:50%;background:var(--surface-2);font-size:16px;color:var(--ink-2)}
+.optsheet .obody{overflow-y:auto;padding:6px 16px 12px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.og{border:0;margin:12px 0 0;padding:0}
+.og legend{font-weight:700;font-size:15px;padding:0;margin-bottom:6px}
+.og legend span{font-weight:400;font-size:12px;color:var(--muted);margin-left:6px}
+.og.need legend span{color:var(--chili);font-weight:700}
+.og.need{background:#FDE2E2;border-radius:10px;padding:6px 8px;margin-left:-8px;margin-right:-8px}
+.oc{display:flex;align-items:center;gap:10px;min-height:46px;border-bottom:1px solid var(--line);cursor:pointer}
+.oc input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.oc .cn{flex:1}
+.oc .cp{color:var(--muted);font-variant-numeric:tabular-nums}
+.onote{display:block;margin-top:14px;font-weight:700;font-size:15px}
+.onote textarea{display:block;width:100%;margin-top:6px;font:inherit;font-weight:400;font-size:15px;padding:9px 11px;
+  border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);resize:vertical}
+.optsheet .ofoot{display:flex;gap:12px;align-items:center;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line)}
+.optsheet .ofoot .oadd{flex:1;min-height:50px;font-size:16px;font-weight:700}
+.optsheet .ofoot .stepper{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:10px;padding:2px}
+.optsheet .stepper button{width:36px;height:36px;border-radius:8px;font-size:18px;color:var(--accent-ink);background:transparent}
+.optsheet .stepper .q{min-width:22px;text-align:center;font-weight:700}
+.optsheet .otot{font-size:19px;font-variant-numeric:tabular-nums}
+.cl{display:flex;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.cl .cli{flex:1;min-width:0}
+.cl .cln{font-weight:600}
+.cl .clo{font-size:13px;color:var(--ink-2)}
+.cl .clnote,.ticket .note{font-size:12.5px;color:var(--accent-ink);background:var(--accent-wash);border-radius:6px;
+  padding:1px 7px;display:inline-block;margin-top:2px}
+.cl .clp{font-size:13.5px;color:var(--accent-ink);font-weight:600;font-variant-numeric:tabular-nums}
+.cl .stepper{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:10px;padding:2px}
+.ticket .opt{display:block;font-size:12.5px;color:var(--ink-2);line-height:1.45}

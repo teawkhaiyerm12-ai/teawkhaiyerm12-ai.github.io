@@ -13,7 +13,7 @@
 
 public/ ไม่ถูกแก้ — การแก้ path/redirect ทั้งหมดเกิดตอน build เท่านั้น
 """
-import base64, io, json, os, re, sys
+import base64, io, json, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, "public", "assets")
@@ -192,6 +192,27 @@ def to_classic(js):
     return js
 
 
+
+def default_options():
+    """คลังตัวเลือกเริ่มต้น — อ่านจาก DEFAULT_OPTIONS ใน core.js ตัวเดียวกับระบบจริง"""
+    src = read("core.js")
+    js = src[src.index("export const DEFAULT_OPTIONS = ["):]
+    js = js[js.index("["):js.index("];") + 1]
+    out = subprocess.run(["node", "-e", "process.stdout.write(JSON.stringify(" + js + "))"],
+                         capture_output=True, text=True, encoding="utf-8", check=True).stdout
+    return json.loads(out)
+
+
+def opts_for(cat, name):
+    """ตัวเลือกของเมนูตัวอย่าง: ก๋วยเตี๋ยวได้ครบชุด จานหลักได้ "พิเศษ" กะเพราได้เพิ่มไข่ดาว"""
+    if name.startswith("ก๋วยเตี๋ยว"):
+        return ["size", "soup", "noodle", "topping"]
+    if cat == "เครื่องดื่ม":
+        return []
+    if "กะเพรา" in name:
+        return ["size", "egg"]
+    return ["size"] if cat in ("แนะนำ", "ข้าว", "เส้น") else []
+
 def build():
     if not os.path.isdir(PHOTOS):
         sys.exit("ยังไม่มีรูปทดสอบ — รัน  python tools/fetch-sample-photos.py  ก่อน")
@@ -262,13 +283,14 @@ def build():
         fn = "%02d.webp" % (i + 1)
         with open(os.path.join(sdir, fn), "wb") as f:
             f.write(raws[i % len(raws)])
-        sample.append({"cat": c, "name": n, "nameMy": my, "price": p, "img": fn})
+        sample.append({"cat": c, "name": n, "nameMy": my, "price": p, "img": fn, "opts": opts_for(c, n)})
     with open(os.path.join(sdir, "menu.json"), "w", encoding="utf-8", newline="") as f:
         json.dump(sample, f, ensure_ascii=False, indent=1)
     print("เขียน public/sample/ (%d เมนู)" % len(sample))
 
-    seed = {"menu": [{"cat": c, "name": n, "nameMy": my, "price": p, "img": imgs[i % len(imgs)]}
+    seed = {"menu": [{"cat": c, "name": n, "nameMy": my, "price": p, "img": imgs[i % len(imgs)], "opts": opts_for(c, n)}
                      for i, (c, n, p, my) in enumerate(MENU_TH)],
+            "options": default_options(),
             "tables": list(range(1, 9))}
 
     with open(SHELL, encoding="utf-8") as f:

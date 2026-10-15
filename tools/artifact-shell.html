@@ -81,7 +81,7 @@ function rid() {
   return Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12);
 }
 function seed(force) {
-  if (!force && localStorage.getItem("mock-firestore-seeded") === "3") return;
+  if (!force && localStorage.getItem("mock-firestore-seeded") === "4") return;
   ["mock-firestore", "mock-firestore-v", "mock-auth-user", "qr-order-settings"]
     .forEach(function (k) { localStorage.removeItem(k); });
   var db = {};
@@ -93,12 +93,13 @@ function seed(force) {
   var names = {};
   SEED.menu.forEach(function (m, i) {
     var id = rid(); names[id] = m.nameMy;
-    db["menu/" + id] = { name: m.name, nameMy: m.nameMy, price: m.price, cat: m.cat,
+    db["menu/" + id] = { name: m.name, nameMy: m.nameMy, price: m.price, cat: m.cat, opts: m.opts || [],
                             sort: i * 10, emoji: "🍽️", img: m.img, soldout: false };
   });
   db["settings/menuNames"] = names;
+  db["settings/options"] = { groups: SEED.options };
   localStorage.setItem("mock-firestore", JSON.stringify(db));
-  localStorage.setItem("mock-firestore-seeded", "3");
+  localStorage.setItem("mock-firestore-seeded", "4");
 }
 seed(false);
 
