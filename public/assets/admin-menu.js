@@ -167,7 +167,7 @@ function init(user, role) {
   optEl.onclick = e => {
     const b = e.target.closest("button"); if (!b) return;
     const d = b.dataset;
-    if (b.id === "optseed") { lib = structuredClone(DEFAULT_OPTIONS); }
+    if (b.id === "optseed") { lib = JSON.parse(JSON.stringify(DEFAULT_OPTIONS)); }
     else if (b.id === "optadd") { lib.push({ id: newId(), name: "กลุ่มใหม่", type: "many", required: false, choices: [{ name: "ตัวเลือก", price: 0 }] }); }
     else if (d.cadd !== undefined) { lib[+d.cadd].choices.push({ name: "ตัวเลือก", price: 0 }); }
     else if (d.cdel !== undefined) {

@@ -206,7 +206,15 @@ function render(tableNo, menu, lib) {
       e.target.closest(".og")?.classList.remove("need");
       paint();
     });
+    // กลุ่ม "เลือก 1 อย่าง" ที่ไม่บังคับ: แตะอันที่เลือกอยู่ซ้ำ = ยกเลิก (radio ปกติยกเลิกไม่ได้)
+    sh.addEventListener("pointerdown", e => {
+      const r = e.target.closest(".oc")?.querySelector("input[type=radio]");
+      if (r) r.dataset.was = r.checked ? "1" : "";
+    });
     sh.addEventListener("click", e => {
+      const r = e.target.closest(".oc")?.querySelector("input[type=radio]");
+      const g = r && gs.find(x => `g_${x.id}` === r.name);
+      if (r && e.target === r && r.dataset.was && g && !g.required) { r.checked = false; r.dataset.was = ""; paint(); }
       if (e.target === sh || e.target.closest(".x")) return close();
       const q = e.target.closest("[data-q]");
       if (q) { qty = Math.max(1, Math.min(20, qty + +q.dataset.q)); paint(); }

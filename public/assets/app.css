@@ -99,6 +99,8 @@ input,select,textarea{font:inherit;color:inherit}
 .btn.danger:hover{color:var(--chili);border-color:var(--chili)}
 .fld{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:5px;
   padding:8px 11px;font-size:15px;color:var(--ink)}
+/* iPhone ซูมหน้าจอเองเมื่อแตะช่องพิมพ์ที่ตัวเล็กกว่า 16px (ช่องรหัส ช่องหมายเหตุ ช่องแก้เมนู) */
+@media (pointer:coarse){.fld,.onote textarea{font-size:16px}}
 .fld:hover{border-color:var(--muted)}
 
 .toast-bar{position:fixed;left:50%;bottom:26px;transform:translate(-50%,140%);
